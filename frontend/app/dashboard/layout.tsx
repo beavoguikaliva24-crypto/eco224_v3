@@ -9,6 +9,8 @@ import {
   ClipboardCheck, Settings, LogOut, Menu, X, History, 
   UserCircle
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+
 
 // On organise la navigation par sections pour plus de clarté
 const menuGroups = [
@@ -44,6 +46,7 @@ const menuGroups = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const { user, loading } = useAuth();
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -141,10 +144,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="h-8 w-px bg-zinc-200 dark:border-zinc-800 mx-2" />
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-semibold dark:text-white text-zinc-950">Utilisateur</p>
-                <p className="text-xs text-zinc-500">Administrateur</p>
-              </div>
-              <UserCircle size={32} className="text-zinc-400" />
+          {loading ? (
+            <div className="h-4 w-20 bg-zinc-200 animate-pulse rounded" />
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-zinc-950 dark:text-white">
+                {user?.first_name} {user?.last_name}
+              </p>
+              <p className="text-xs text-zinc-500 uppercase">
+                {user?.role} {/* Affiche DEV, ADMIN, TEACHER, etc. */}
+              </p>
+            </>
+          )}
+        </div>
+              {/* Affichage de la photo de profil réelle */}
+        <div className="h-10 w-10 rounded-full overflow-hidden bg-zinc-100 border border-zinc-200">
+          {user?.photo ? (
+            <img src={user.photo} alt="Profil" className="h-full w-full object-cover" />
+          ) : (
+            <UserCircle size={40} className="text-zinc-400" />
+          )}
+        </div>
             </div>
           </div>
         </header>
