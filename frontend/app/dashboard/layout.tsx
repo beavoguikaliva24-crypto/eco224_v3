@@ -31,6 +31,7 @@ const menuGroups = [
       { name: "Notes & Examens", href: "/dashboard/grading", icon: FileText, roles: ["DEV", "ADMIN", "STAFF", "TEACHER", "STUDENT", "PARENT"] },
       { name: "Discipline", href: "/dashboard/discipline", icon: ShieldAlert, roles: ["DEV", "ADMIN", "STAFF", "TEACHER", "PARENT"] },
       { name: "Paiements", href: "/dashboard/paiements", icon: HandCoins, roles: ["DEV", "ADMIN", "STAFF", "PARENT"] },
+      { name: "Enfants", href: "/dashboard/children", icon: UserCircle, roles: ["DEV", "ADMIN", "STAFF", "PARENT"] },
     ]
   },
   {

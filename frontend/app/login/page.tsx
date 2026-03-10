@@ -3,47 +3,58 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Phone, Loader2, Eye, EyeOff } from "lucide-react";
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
 import axios from "axios";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function LoginPage() {
-	const router = useRouter();
-	const [isLoading, setIsLoading] = useState(false);
-	const [showPassword, setShowPassword] = useState(false);
-	const [formData, setFormData] = useState({ phone: "", password: "" });
-	const [error, setError] = useState("");
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({ phone: "", password: "" });
+  const [error, setError] = useState("");
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setIsLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-		try {
-			const response = await axios.post(`${baseUrl}/api/token/`, {
-			contact: formData.phone, // Le nom de la clé doit être 'contact'
-			password: formData.password,
-			});
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/token/`, {
+        contact: formData.phone.trim(),
+        password: formData.password,
+      });
 
-			const { access, refresh, user } = response.data;
+      const { access, refresh, user } = response.data;
 
-			// Stockage pour le client (localStorage)
-			localStorage.setItem('access', access);
-			
-			// Stockage pour le Middleware (Cookies)
-			Cookies.set('access', access, { expires: 7 }); // expire dans 7 jours
-			Cookies.set('user_role', user.role, { expires: 7 });
+      // Stockage client
+      localStorage.setItem("eco224_access", access);
+      localStorage.setItem("eco224_refresh", refresh);
 
-			router.push('/dashboard');
-		} catch (error) {
-			// Gestion de l'erreur visible sur votre capture
-			setError("Numéro ou mot de passe incorrect.");
-		} finally {
-			setIsLoading(false);
-		}
-	};
+      // Stockage middleware
+      Cookies.set("access", access, { expires: 7 });
+      if (user?.role) {
+        Cookies.set("user_role", user.role, { expires: 7 });
+      }
+
+      router.push("/dashboard");
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 401) {
+        setError("Numéro ou mot de passe incorrect.");
+      } else if (status >= 500) {
+        setError("Erreur serveur, veuillez réessayer.");
+      } else {
+        setError("Impossible de se connecter. Vérifiez votre connexion.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-300 px-4 py-6 dark:bg-zinc-950">
       <div className="flex w-full max-w-6xl overflow-hidden rounded-[2rem] border border-zinc-600 bg-white shadow-2xl shadow-zinc-200/50 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
-        
         {/* Colonne Gauche - Formulaire */}
         <div className="flex w-full items-center justify-center p-8 sm:p-12 md:p-16 lg:max-w-xl lg:p-20">
           <div className="absolute inset-0 z-0">
@@ -52,10 +63,10 @@ export default function LoginPage() {
               alt="Background"
               className="h-full w-full object-cover opacity-30 dark:opacity-10"
             />
-             <div className="absolute inset-0 bg-white/50 dark:bg-zinc-950/70" />
+            <div className="absolute inset-0 bg-white/50 dark:bg-zinc-950/70" />
           </div>
-          
-          <div className="w-full max-w-sm space-y-10 z-10 relative">
+
+          <div className="relative z-10 w-full max-w-sm space-y-10">
             <div className="text-center lg:text-left">
               <h1 className="text-4xl font-extrabold tracking-tighter text-zinc-950 dark:text-zinc-50">
                 Bienvenue
@@ -83,6 +94,7 @@ export default function LoginPage() {
                       type="tel"
                       placeholder="624 00 00 00"
                       required
+                      value={formData.phone}
                       className="flex h-12 w-full rounded-xl border border-zinc-200 bg-white px-12 py-3 text-sm transition-all focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-zinc-300 dark:focus:ring-zinc-300"
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     />
@@ -104,6 +116,7 @@ export default function LoginPage() {
                       id="password"
                       type={showPassword ? "text" : "password"}
                       required
+                      value={formData.password}
                       className="flex h-12 w-full rounded-xl border border-zinc-200 bg-white px-12 py-3 text-sm transition-all focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-zinc-300 dark:focus:ring-zinc-300"
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     />
@@ -162,18 +175,17 @@ export default function LoginPage() {
               <p className="text-lg text-zinc-200">
                 Accédez à votre tableau de bord centralisé pour suivre vos ventes, vos clients et vos stocks en temps réel.
               </p>
-               <div className="absolute top-12 left-16 flex items-center gap-3">
-                 <div className="w-35 h-35 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-                    <span className="text-white font-bold text-xl rounded-full">
-                      <img src="/eco1.png" alt="Logo" className="w-34 h-34 rounded-full"/>
-                    </span>
-                 </div>
-                 <span className="text-white font-semibold text-xl tracking-tight">GESTION SCOLAIRE</span>
+              <div className="absolute left-16 top-12 flex items-center gap-3">
+                <div className="flex h-35 w-35 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-sm">
+                  <span className="rounded-full text-xl font-bold text-white">
+                    <img src="/eco1.png" alt="Logo" className="h-34 w-34 rounded-full" />
+                  </span>
+                </div>
+                <span className="text-xl font-semibold tracking-tight text-white">GESTION SCOLAIRE</span>
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
