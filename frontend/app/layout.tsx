@@ -1,46 +1,23 @@
-﻿// app/layout.tsx
-"use client"; // <--- AJOUTEZ CETTE LIGNE ICI
-
+﻿import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import './globals.css';
-import { Toaster } from 'react-hot-toast';
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+const inter = Inter({ subsets: ['latin'] });
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    const TIMEOUT = 20 * 60 * 1000; // 20 minutes
+export const metadata: Metadata = {
+  title: 'Ecole-224 | Connexion',
+  description: 'Plateforme de gestion scolaire',
+};
 
-    const logout = () => {
-      localStorage.removeItem('token');
-      router.push("/login");
-      alert("Session expirée pour inactivité.");
-    };
-
-    const resetTimer = () => {
-      clearTimeout(timer);
-      timer = setTimeout(logout, TIMEOUT);
-    };
-
-    const events = ['mousedown', 'keydown', 'scroll', 'click'];
-    events.forEach(e => window.addEventListener(e, resetTimer));
-
-    resetTimer();
-
-    return () => {
-      events.forEach(e => window.removeEventListener(e, resetTimer));
-      clearTimeout(timer);
-    };
-  }, [router]);
-
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  // data-theme est l'attribut que DaisyUI utilise pour appliquer un thème
   return (
-    <html lang="fr">
-      <body>
-        <Toaster />
-        {children}
-      </body>
+    <html lang="fr" data-theme="light">
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }

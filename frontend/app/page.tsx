@@ -1,13 +1,18 @@
-// middleware.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+'use client';
 
-export function middleware(request: NextRequest) {
-  const url = request.nextUrl.clone();
-  
-  // Si l'utilisateur est sur la racine "/"
-  if (url.pathname === '/') {
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
-  }
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function Home() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/login');
+  }, [router]);
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-base-100">
+      <span className="loading loading-spinner loading-lg"></span>
+    </div>
+  );
 }

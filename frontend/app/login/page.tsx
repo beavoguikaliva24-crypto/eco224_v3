@@ -1,38 +1,74 @@
-"use client";
-import { useState } from 'react';
+'use client';
+
 import { useRouter } from 'next/navigation';
 
-export default function LoginPage() {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const router = useRouter();
+const LoginPage = () => {
+  const router = useRouter();
 
-    return (
-        <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-            <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
-                <h2 className="text-3xl font-bold text-center text-slate-800 mb-8">Eco224</h2>
-                
-                {error && <p className="bg-red-100 text-red-600 p-3 rounded-lg mb-4 text-sm text-center">{error}</p>}
-                
-                <form className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700">Utilisateur</label>
-                        <input type="text" required value={username} onChange={(e) => setUsername(e.target.value)}
-                            className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700">Mot de passe</label>
-                        <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                            className="mt-1 w-full px-4 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" />
-                    </div>
-                    <button type="submit" disabled={loading}
-                        className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-slate-400">
-                        {loading ? 'Connexion...' : 'Se connecter'}
-                    </button>
-                </form>
-            </div>
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    console.log('Tentative de connexion...');
+    // Logique d'authentification à ajouter ici
+    // Pour l'instant, on redirige vers le tableau de bord
+    router.push('/dashboard');
+  };
+
+  return (
+    <div className="flex min-h-screen">
+      {/* --- Volet Gauche (Image et Marque) --- */}
+      <div className="hidden w-1/2 flex-col items-center justify-center bg-primary text-primary-content lg:flex">
+        <div className="text-center">
+          <h1 className="mb-4 text-5xl font-bold">ECOLE-224</h1>
+          <p className="text-xl">Votre plateforme de gestion scolaire unifiée.</p>
         </div>
-    );
-}
+      </div>
+
+      {/* --- Volet Droit (Formulaire de connexion) --- */}
+      <div className="flex w-full items-center justify-center bg-base-100 p-8 lg:w-1/2">
+        <div className="w-full max-w-md">
+          <h2 className="mb-2 text-3xl font-bold">Bienvenue 👋</h2>
+          <p className="mb-8 text-base-content/70">Veuillez entrer vos accès pour continuer.</p>
+
+          <form onSubmit={handleSubmit}>
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text">Adresse Email</span>
+              </label>
+              <input
+                type="email"
+                placeholder="nom@exemple.com"
+                className="input input-bordered w-full"
+                defaultValue="nom@ecole.com"
+                required
+              />
+            </div>
+            <div className="form-control mt-4 w-full">
+              <label className="label">
+                <span className="label-text">Mot de passe</span>
+              </label>
+              <input
+                type="password"
+                placeholder="********"
+                className="input input-bordered w-full"
+                defaultValue="password"
+                required
+              />
+              <label className="label">
+                <a href="#" className="link-hover link label-text-alt">
+                  Mot de passe oublié ?
+                </a>
+              </label>
+            </div>
+            <div className="form-control mt-6">
+              <button type="submit" className="btn btn-primary">
+                Se connecter
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LoginPage;
