@@ -1,26 +1,46 @@
-﻿import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-// import 'antd/dist/reset.css'; // Cette ligne n'est plus nécessaire avec la méthode ci-dessous
-import StyledComponentsRegistry from "@/lib/AntdRegistry";
+﻿// app/layout.tsx
+"use client"; // <--- AJOUTEZ CETTE LIGNE ICI
 
-const inter = Inter({ subsets: ["latin"] });
+import './globals.css';
+import { Toaster } from 'react-hot-toast';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Ecole 224 - Gestion Scolaire",
-  description: "Plateforme de gestion scolaire complète",
-};
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-return (
-      <html lang="fr">
-        <body className={inter.className}>
-          <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
-        </body>
-      </html>
-    );
-} // <-- Le fichier doit s'arrêter exactement ici
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    const TIMEOUT = 20 * 60 * 1000; // 20 minutes
+
+    const logout = () => {
+      localStorage.removeItem('token');
+      router.push("/login");
+      alert("Session expirée pour inactivité.");
+    };
+
+    const resetTimer = () => {
+      clearTimeout(timer);
+      timer = setTimeout(logout, TIMEOUT);
+    };
+
+    const events = ['mousedown', 'keydown', 'scroll', 'click'];
+    events.forEach(e => window.addEventListener(e, resetTimer));
+
+    resetTimer();
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, resetTimer));
+      clearTimeout(timer);
+    };
+  }, [router]);
+
+  return (
+    <html lang="fr">
+      <body>
+        <Toaster />
+        {children}
+      </body>
+    </html>
+  );
+}

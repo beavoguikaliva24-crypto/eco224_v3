@@ -1,20 +1,13 @@
-'use client';
+// middleware.ts
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Spin } from 'antd';
-
-export default function Home() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.push('/login');
-  }, [router]);
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <Spin size="large" />
-      <p className="ml-4">Redirection en cours...</p>
-    </div>
-  );
+export function middleware(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  
+  // Si l'utilisateur est sur la racine "/"
+  if (url.pathname === '/') {
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
+  }
 }
