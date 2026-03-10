@@ -51,9 +51,9 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
 
     # les apps tierces
-    'corsheaders',
     'rest_framework',
-    'rest_framework_simplejwt'
+    'rest_framework_simplejwt',  # <--- Vérifiez bien la virgule ici
+    'corsheaders',               # <--- Et ici
 
     # les apps Django
     'django.contrib.admin',
