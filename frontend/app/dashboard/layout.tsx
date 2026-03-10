@@ -52,11 +52,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // Fonction de filtrage
   const filteredMenu = menuGroups.map(group => ({
-    ...group,
-    items: group.items.filter(item => 
-      !item.roles || (user && item.roles.includes(user.role))
-    )
-  })).filter(group => group.items.length > 0); // On cache le titre du groupe si vide
+  ...group,
+  items: group.items.filter(item => {
+    // Si l'item n'a pas de rôles définis, tout le monde le voit
+    if (!item.roles) return true;
+    // Sinon, on vérifie si le rôle de l'utilisateur est dans la liste
+    return user && item.roles.includes(user.role);
+  })
+})).filter(group => group.items.length > 0); // On cache le titre du groupe si vide
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">

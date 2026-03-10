@@ -14,26 +14,38 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ phone: "", password: "" });
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+  // 1. Assure-toi d'utiliser "contact" car c'est ton USERNAME_FIELD
+// 2. Supprime toute référence à ApiError qui n'est pas défini
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
 
-    try {
-      await login(formData.phone.trim(), formData.password);
-      router.push("/dashboard");
-    } catch (err) {
-      if (err instanceof ApiError) {
-        if (err.status === 401) setError("Numéro ou mot de passe incorrect.");
-        else if (err.status >= 500) setError("Erreur serveur, veuillez réessayer.");
-        else setError("Connexion impossible. Vérifiez les informations saisies.");
-      } else {
-        setError("Une erreur inattendue est survenue.");
-      }
-    } finally {
-      setIsLoading(false);
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+    
+    const response = await axios.post(`${baseUrl}/api/token/`, {
+      contact: formData.phone, // Utilise 'contact' pour Django
+      password: formData.password,
+    });
+
+    // Stockage pour le client et le middleware
+    localStorage.setItem("access", response.data.access);
+    document.cookie = `access=${response.data.access}; path=/`;
+    
+    // On redirige vers le dashboard
+    router.push("/dashboard");
+  } catch (err: any) {
+    // Gestion propre sans ApiError
+    if (err.response?.status === 401) {
+      setError("Identifiants incorrects (numéro ou mot de passe).");
+    } else {
+      setError("Erreur de connexion au serveur.");
     }
-  };
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-300 px-4 py-6 dark:bg-zinc-950">
