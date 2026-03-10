@@ -62,7 +62,11 @@ class BulletinPeriodique(models.Model):
     affectation = models.ForeignKey(Affectation, on_delete=models.CASCADE, verbose_name="Affectation")
     periode = models.ForeignKey(Periode, on_delete=models.CASCADE, verbose_name="Période")
     moyenne_generale = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="Moyenne générale")
+    rang = models.CharField(max_length=20, null=True, blank=True, verbose_name="Rang")
     appreciation_generale = models.CharField(max_length=255, null=True, blank=True, verbose_name="Appréciation générale")
+    details_notes = models.JSONField(default=dict, verbose_name="Détails des notes par matière")
+    stats_classe = models.JSONField(default=dict, verbose_name="Statistiques de la classe")
+    date_calcul = models.DateTimeField(auto_now_add=True, verbose_name="Date de calcul")
 
     class Meta:
         verbose_name = "Bulletin périodique"
@@ -75,7 +79,9 @@ class BulletinPeriodique(models.Model):
 class BulletinAnnuel(models.Model):
     affectation = models.ForeignKey(Affectation, on_delete=models.CASCADE, verbose_name="Affectation")
     moyenne_annuelle = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="Moyenne annuelle")
+    rang = models.CharField(max_length=20, null=True, blank=True, verbose_name="Rang annuel")
     appreciation_annuelle = models.CharField(max_length=255, null=True, blank=True, verbose_name="Appréciation annuelle")
+    date_calcul = models.DateTimeField(auto_now_add=True, verbose_name="Date de calcul")
 
     class Meta:
         verbose_name = "Bulletin annuel"

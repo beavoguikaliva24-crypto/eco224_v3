@@ -1,7 +1,9 @@
 from django.db.models import Sum, F
-from .models import Note
+from django.shortcuts import get_object_or_404
+from .models import BulletinAnnuel, Note, BulletinPeriode
 from enrollment.models import Affectation
 from school.models import MatiereClasse, Periode
+from discipline.services import obtenir_bilan_discipline
 
 from django.db.models import Exists, OuterRef
 from .models import Note, MatiereClasse
@@ -163,3 +165,60 @@ def calculer_stats_classe(camarades, type_bulletin="periode", periode=None):
         "min": min(moyennes),
         "moyenne_classe": round(sum(moyennes) / len(moyennes), 2)
     }
+
+def generer_et_sauvegarder_bulletin_periode(affectation_id: int, periode_id: int):
+    """
+    Calcule toutes les données d'un bulletin périodique et le sauvegarde en base de données.
+    Retourne l'instance du bulletin nouvellement créé ou mis à jour.
+    """
+    affectation = get_object_or_404(Affectation, pk=affectation_id)
+    periode = get_object_or_404(Periode, pk=periode_id)
+    camarades = Affectation.objects.filter(
+        classe=affectation.classe, 
+        annee_scolaire=affectation.annee_scolaire
+    )
+
+    # 1. Calculs (réutilisation de votre logique existante)
+    data_bulletin = calculer_bulletin_intelligent(affectation, periode)
+    rangs = calculer_rangs_classe_custom(camarades, type_bulletin="periode", periode=periode)
+    stats = calculer_stats_classe(camarades, type_bulletin="periode", periode=periode)
+    bilan_disc = obtenir_bilan_discipline(affectation, periode)
+
+    # 2. Sauvegarde avec update_or_create pour éviter les doublons
+    bulletin_obj, created = BulletinPeriode.objects.update_or_create(
+        affectation=affectation,
+        periode=periode,
+        defaults={
+            'moyenne_generale': data_bulletin.get('moyenne_generale', 0.0),
+            'rang': rangs.get(affectation.id, "N/A"),
+            'details_notes': data_bulletin.get('details', {}),
+            'stats_classe': stats,
+            'discipline': bilan_disc,
+        }
+    )
+    return bulletin_obj
+
+def generer_et_sauvegarder_bulletin_annuel(affectation_id: int):
+    """
+    Calcule les données d'un bulletin annuel et le sauvegarde en base de données.
+    """
+    affectation = get_object_or_404(Affectation, pk=affectation_id)
+    camarades = Affectation.objects.filter(
+        classe=affectation.classe, 
+        annee_scolaire=affectation.annee_scolaire
+    )
+
+    # 1. Calculs
+    data_annuel = calculer_moyenne_annuelle_eleve(affectation)
+    rangs_annuels = calculer_rangs_classe_custom(camarades, type_bulletin="annuel")
+
+    # 2. Sauvegarde
+    bulletin_obj, created = BulletinAnnuel.objects.update_or_create(
+        affectation=affectation,
+        defaults={
+            'moyenne_annuelle': data_annuel.get('moyenne_annuelle', 0.0),
+            'rang_annuel': rangs_annuels.get(affectation.id, "N/A"),
+            'details_periodes': data_annuel.get('details_periodes', {}),
+        }
+    )
+    return bulletin_obj
