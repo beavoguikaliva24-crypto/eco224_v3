@@ -12,3 +12,9 @@ node_modules/
 out/
 build/
 .DS_Store
+
+# VS Code
+.vscode/
+
+# MacOS
+.DS_Store
