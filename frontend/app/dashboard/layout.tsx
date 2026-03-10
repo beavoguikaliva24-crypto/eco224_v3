@@ -18,8 +18,8 @@ const menuGroups = [
   {
     title: "Général",
     items: [
-      { name: "Vue d'ensemble", href: "/dashboard", icon: LayoutDashboard }, // Tout le monde
-      { name: "Notifications", href: "/dashboard/notifications", icon: Bell }, // Tout le monde
+      { name: "Vue d'ensemble", href: "/dashboard", icon: LayoutDashboard, roles: undefined }, // Tout le monde
+      { name: "Notifications", href: "/dashboard/notifications", icon: Bell, roles: undefined }, // Tout le monde
     ]
   },
   {
