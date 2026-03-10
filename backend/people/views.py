@@ -18,15 +18,15 @@ class ParentViewSet(viewsets.ModelViewSet):
     serializer_class = ParentSerializer
 
 class MyChildrenAPIView(generics.ListAPIView):
-    serializer_class = ParentChildSerializer
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ParentChildSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        if user.role != "PARENT":
+        u = self.request.user
+        if getattr(u, "role", None) != "PARENT":
             return Student.objects.none()
 
-        parent_profile = getattr(user, "parent_profile", None)
+        parent_profile = getattr(u, "parent_profile", None)
         if not parent_profile:
             return Student.objects.none()
 
