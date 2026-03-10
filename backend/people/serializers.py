@@ -19,46 +19,61 @@ class ParentSerializer(serializers.ModelSerializer):
         model = Parent
         fields = "__all__"
 
-
 class ParentChildSerializer(serializers.ModelSerializer):
-    # Données "enfant" lisibles par le frontend
-    full_name = serializers.CharField(source="Student.full_name", read_only=True)
-    matricule = serializers.CharField(source="Student.matricule", read_only=True)
-    genre = serializers.CharField(source="Student.genre", read_only=True)
-    date_naissance = serializers.CharField(source="Student.date_naissance", read_only=True)
-    lieu_naissance = serializers.CharField(source="Student.lieu_naissance", read_only=True)
-    is_active = serializers.BooleanField(source="Student.is_active", read_only=True)
-    photo = serializers.ImageField(source="Student.photo", read_only=True)
-    id = serializers.IntegerField(source="Student.id", read_only=True)
+    id = serializers.IntegerField(read_only=True)
+    full_name = serializers.SerializerMethodField()
+    matricule = serializers.SerializerMethodField()
 
-    # Données du compte user lié à l'élève (si présent)
-    contact = serializers.CharField(source="User.contact", read_only=True, default="")
-    email = serializers.EmailField(source="User.email", read_only=True, default="")
-    user_photo = serializers.ImageField(source="User.photo", read_only=True)
+    # ✅ photo élève (pas user.photo)
+    photo = serializers.SerializerMethodField()
 
-    # Parent lié (utile debug/affichage)
-    parent_id = serializers.IntegerField(source="Parent.id", read_only=True)
-    parent_name = serializers.SerializerMethodField()
+    # ✅ nouveaux champs demandés
+    classe = serializers.SerializerMethodField()
+    annee_scolaire = serializers.SerializerMethodField()
 
     class Meta:
         model = Student
         fields = [
             "id",
-            "matricule",
             "full_name",
-            "genre",
+            "matricule",
             "photo",
-            "user_photo",
-            "contact",
-            "email",
-            "date_naissance",
-            "lieu_naissance",
-            "is_active",
-            "parent_id",
-            "parent_name",
+            "classe",
+            "annee_scolaire",
         ]
 
-    def get_parent_name(self, obj):
-        if obj.parents and obj.parents.user:
-            return obj.parents.user.get_full_name()
-        return ""
+    def get_full_name(self, obj):
+        value = (obj.full_name or "").strip()
+        if value:
+            return value
+        return f"{(obj.prenom1 or '').strip()} {(obj.nom or '').strip()}".strip() or "Nom non défini"
+
+    def get_matricule(self, obj):
+        value = (obj.matricule or "").strip()
+        return value if value else f"MAT-{obj.id}"
+
+    def get_photo(self, obj):
+        if not obj.photo:
+            return None
+        request = self.context.get("request")
+        if request:
+            return request.build_absolute_uri(obj.photo.url)
+        return obj.photo.url
+
+    def get_classe(self, obj):
+        # selon ton modèle de scolarité (Affectation/Classe)
+        affectation = getattr(obj, "affectation_actuelle", None)
+        if affectation and getattr(affectation, "classe", None):
+            return affectation.classe.nom
+        # fallback si relation directe existe
+        if hasattr(obj, "classe") and obj.classe:
+            return getattr(obj.classe, "nom", None) or str(obj.classe)
+        return "Non définie"
+
+    def get_annee_scolaire(self, obj):
+        affectation = getattr(obj, "affectation_actuelle", None)
+        if affectation and getattr(affectation, "annee_scolaire", None):
+            return getattr(affectation.annee_scolaire, "libelle", None) or str(affectation.annee_scolaire)
+        if hasattr(obj, "annee_scolaire") and obj.annee_scolaire:
+            return getattr(obj.annee_scolaire, "libelle", None) or str(obj.annee_scolaire)
+        return "Non définie"

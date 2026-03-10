@@ -6,14 +6,12 @@ import { getAccessToken } from "@/lib/auth";
 import { apiFetch, ApiError } from "@/lib/api";
 
 type Child = {
-  id: number;
-  first_name?: string;
-  last_name?: string;
-  prenom1?: string;
-  nom?: string;
+  id?: number;
+  full_name?: string;
   matricule?: string;
   photo?: string | null;
-  contact?: string;
+  classe?: string;
+  annee_scolaire?: string;
 };
 
 type ChildrenResponse = { results?: Child[] } | Child[];
@@ -21,8 +19,7 @@ type ChildrenResponse = { results?: Child[] } | Child[];
 function normalizeChild(raw: Child): Child {
   return {
     ...raw,
-    first_name: raw.first_name ?? raw.prenom1 ?? "",
-    last_name: raw.last_name ?? raw.nom ?? "",
+    full_name: raw.full_name || "Nom non défini",
   };
 }
 
@@ -89,12 +86,18 @@ export default function ChildrenPage() {
 
       {!loading && !error && children.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {children.map((child) => (
-            <article key={child.id} className="rounded-2xl border border-zinc-200 bg-white p-5">
+          {children.map((child, index) => {
+  const childKey =
+    child.id ??
+    child.matricule ??
+    `${child.full_name || "child"}-${index}`;
+
+  return (
+            <article key={childKey} className="rounded-2xl border border-zinc-200 bg-white p-5">
               <div className="mb-4 flex items-center gap-3">
                 <div className="h-12 w-12 overflow-hidden rounded-full border border-zinc-200 bg-zinc-100">
                   {child.photo ? (
-                    <img src={child.photo} alt={`${child.first_name} ${child.last_name}`} className="h-full w-full object-cover" />
+                    <img src={child.photo} alt={child.full_name} className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
                       <UserCircle className="h-7 w-7 text-zinc-400" />
@@ -102,15 +105,17 @@ export default function ChildrenPage() {
                   )}
                 </div>
                 <div>
-                  <h2 className="text-base font-bold">{child.first_name} {child.last_name}</h2>
+                  <h2 className="text-base font-bold">{child.full_name}</h2>
                   <p className="text-xs uppercase text-zinc-500">{child.matricule || "Matricule non défini"}</p>
                 </div>
               </div>
-              <p className="flex items-center gap-2 text-sm text-zinc-600">
-                <Phone className="h-4 w-4" /> Contact: <b>{child.contact || "—"}</b>
-              </p>
+              <div className="space-y-2 text-sm text-zinc-600">
+                <p>Classe: <b>{child.classe || "Non définie"}</b></p>
+                <p>Année scolaire: <b>{child.annee_scolaire || "Non définie"}</b></p>
+                </div>
             </article>
-          ))}
+            );
+            })}
         </div>
       )}
     </section>
