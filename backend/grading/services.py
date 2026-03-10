@@ -4,25 +4,25 @@ from .models import BulletinPeriode, BulletinAnnuel, Note
 from enrollment.models import Affectation
 from school.models import MatiereClasse, Periode
 from discipline.services import obtenir_bilan_discipline
-from decimal import Decimal # <--- L'IMPORTATION MANQUANTE
+from decimal import Decimal
 
 def calculer_bulletin_intelligent(affectation, periode):
     """
-    CORRIGÉ : Calcule la moyenne en divisant TOUJOURS par le total des coefficients
-    du programme. Une matière non notée vaut 0.
+    Calcule la moyenne d'une période pour un élève en divisant TOUJOURS 
+    par le total des coefficients du programme. Une matière non notée vaut 0.
     """
     matieres_programme = MatiereClasse.objects.filter(
         classe=affectation.classe,
         annee_scolaire=affectation.annee_scolaire
     )
     
-    total_points_eleve = 0
+    total_points_eleve = Decimal('0.0')
     total_coefficients_programme = 0
     details = []
 
     for mc in matieres_programme:
         coef = mc.coefficient
-        total_coefficients_programme += coef # On additionne TOUS les coefficients.
+        total_coefficients_programme += coef
 
         note_eleve = Note.objects.filter(
             affectation=affectation, 
@@ -30,19 +30,16 @@ def calculer_bulletin_intelligent(affectation, periode):
             periodicite=periode
         ).first()
 
-        # Logique simplifiée :
         if note_eleve and note_eleve.moyenne is not None:
-            # Cas 1 : L'élève a une note.
             points = note_eleve.moyenne * coef
             moyenne_affichable = note_eleve.moyenne
             appreciation = note_eleve.appreciation
             total_points_eleve += points
         else:
-            # Cas 2 : L'élève n'a pas de note. Il obtient 0.
-            points = 0
+            points = Decimal('0.0')
             moyenne_affichable = 0
             appreciation = "Absent / Non noté"
-            total_points_eleve += 0 # On ajoute 0 à son total, mais le coef compte.
+            total_points_eleve += points
 
         details.append({
             'matiere': mc.matiere.nom,
@@ -52,38 +49,37 @@ def calculer_bulletin_intelligent(affectation, periode):
             'appreciation': appreciation
         })
 
-    # Le diviseur est maintenant toujours le total des coefficients du programme.
-    moyenne_generale = total_points_eleve / total_coefficients_programme if total_coefficients_programme > 0 else 0
+    moyenne_generale = total_points_eleve / total_coefficients_programme if total_coefficients_programme > 0 else Decimal('0.0')
     
     return {
         'moyenne_generale': round(moyenne_generale, 2),
         'details': details,
         'coef_total_calcule': total_coefficients_programme
     }
-    
-# ... Le reste du fichier services.py reste identique ...
 
 def calculer_moyenne_annuelle_eleve(affectation):
     """
     Calcule la moyenne annuelle en se basant sur les moyennes de chaque période.
     """
     periodes = Periode.objects.filter(annee_scolaire=affectation.annee_scolaire).order_by('id')
-    somme_moyennes = 0
+    
+    # CORRECTION : Initialiser comme un objet Decimal pour la précision
+    somme_moyennes = Decimal('0.0')
     periodes_comptees = 0
     resultats_periodes = []
 
     for periode in periodes:
         data = calculer_bulletin_intelligent(affectation, periode)
-        # On ne compte une période que si elle a été évaluée
         if data['coef_total_calcule'] > 0:
-            somme_moyennes += data['moyenne_generale']
+            # CORRECTION : S'assurer que l'on additionne bien des Decimals
+            somme_moyennes += Decimal(data['moyenne_generale'])
             periodes_comptees += 1
             resultats_periodes.append({
                 'nom': periode.nom,
                 'moyenne': float(data['moyenne_generale'])
             })
 
-    moyenne_annuelle = somme_moyennes / periodes_comptees if periodes_comptees > 0 else 0
+    moyenne_annuelle = somme_moyennes / periodes_comptees if periodes_comptees > 0 else Decimal('0.0')
     
     return {
         'moyenne_annuelle': round(moyenne_annuelle, 2),
@@ -91,9 +87,6 @@ def calculer_moyenne_annuelle_eleve(affectation):
     }
 
 def calculer_rangs_classe_custom(affectations_classe, type_bulletin="periode", periode=None):
-    """
-    Calcule le rang de chaque élève dans une classe.
-    """
     scores = []
     for aff in affectations_classe:
         if type_bulletin == "periode":
@@ -105,7 +98,7 @@ def calculer_rangs_classe_custom(affectations_classe, type_bulletin="periode", p
     scores.sort(key=lambda x: x['moyenne'], reverse=True)
     rangs = {}
     current_rang = 0
-    last_moyenne = -1.0 # Initialiser à une valeur impossible
+    last_moyenne = Decimal('-1.0')
 
     for i, score in enumerate(scores):
         if score['moyenne'] != last_moyenne:
@@ -120,9 +113,6 @@ def calculer_rangs_classe_custom(affectations_classe, type_bulletin="periode", p
     return rangs
 
 def calculer_stats_classe(camarades, type_bulletin="periode", periode=None):
-    """
-    Calcule les statistiques (max, min, moyenne) pour une classe.
-    """
     moyennes = []
     for aff in camarades:
         if type_bulletin == "periode":
@@ -137,13 +127,10 @@ def calculer_stats_classe(camarades, type_bulletin="periode", periode=None):
     return {
         "max": float(max(moyennes)),
         "min": float(min(moyennes)),
-        "moyenne_classe": float(round(sum(moyennes) / len(moyennes), 2))
+        "moyenne_classe": float(round(sum(moyennes) / Decimal(len(moyennes)), 2))
     }
 
 def generer_et_sauvegarder_bulletin_periodique(affectation_id: int, periode_id: int):
-    """
-    Orchestre le calcul de toutes les données d'un bulletin périodique et le sauvegarde.
-    """
     affectation = get_object_or_404(Affectation, pk=affectation_id)
     periode = get_object_or_404(Periode, pk=periode_id)
     camarades = Affectation.objects.filter(classe=affectation.classe, annee_scolaire=affectation.annee_scolaire)
@@ -167,9 +154,6 @@ def generer_et_sauvegarder_bulletin_periodique(affectation_id: int, periode_id: 
     return bulletin_obj
 
 def generer_et_sauvegarder_bulletin_annuel(affectation_id: int):
-    """
-    Orchestre le calcul de toutes les données d'un bulletin annuel et le sauvegarde.
-    """
     affectation = get_object_or_404(Affectation, pk=affectation_id)
     camarades = Affectation.objects.filter(classe=affectation.classe, annee_scolaire=affectation.annee_scolaire)
 
@@ -181,7 +165,6 @@ def generer_et_sauvegarder_bulletin_annuel(affectation_id: int):
         defaults={
             'moyenne_annuelle': data_annuel.get('moyenne_annuelle', 0.0),
             'rang': rangs_annuels.get(affectation.id, "N/A"),
-            # 'appreciation_annuelle': # Logique à définir si vous en avez une
         }
     )
     return bulletin_obj
