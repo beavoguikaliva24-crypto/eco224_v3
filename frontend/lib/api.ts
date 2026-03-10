@@ -1,37 +1,45 @@
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://localhost:8000";
-
-export type Json = Record<string, unknown>;
-
 export class ApiError extends Error {
   status: number;
-  payload: unknown;
-  constructor(message: string, status: number, payload: unknown) {
+  data: any;
+  constructor(message: string, status: number, data?: any) {
     super(message);
     this.status = status;
-    this.payload = payload;
+    this.data = data;
   }
 }
 
-export async function apiFetch<T>(
-  path: string,
-  opts: RequestInit & { token?: string } = {},
-): Promise<T> {
-  const url = `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
-  const headers = new Headers(opts.headers);
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://127.0.0.1:8000";
 
-  if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+type ApiFetchOptions = RequestInit & {
+  token?: string;
+};
 
-  if (opts.token) {
-    headers.set("Authorization", `Bearer ${opts.token}`);
+export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
+  const { token, headers, ...rest } = options;
+
+  const finalHeaders = new Headers(headers || {});
+  if (!finalHeaders.has("Content-Type")) {
+    finalHeaders.set("Content-Type", "application/json");
   }
 
-  const res = await fetch(url, { ...opts, headers });
-  const isJson = (res.headers.get("content-type") || "").includes("application/json");
-  const payload = isJson ? await res.json() : await res.text();
+  if (token) {
+    finalHeaders.set("Authorization", `Bearer ${token}`);
+  }
+
+  const url = `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+
+  const res = await fetch(url, {
+    ...rest,
+    headers: finalHeaders,
+  });
+
+  const contentType = res.headers.get("content-type") || "";
+  const body = contentType.includes("application/json") ? await res.json() : await res.text();
 
   if (!res.ok) {
-    throw new ApiError("API request failed", res.status, payload);
+    throw new ApiError("API request failed", res.status, body);
   }
-  return payload as T;
+
+  return body as T;
 }

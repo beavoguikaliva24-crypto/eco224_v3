@@ -46,9 +46,10 @@ export default function ChildrenPage() {
         setChildren(list.map(normalizeChild));
       } catch (err) {
         if (err instanceof ApiError) {
-          if (err.status === 403) setError("Accès refusé.");
-          else if (err.status === 404) setError("Route backend absente: /api/accounts/children/.");
-          else setError("Impossible de charger la liste des enfants.");
+        if (err.status === 401) setError("Session expirée ou token invalide. Veuillez vous reconnecter.");
+        else if (err.status === 403) setError("Accès refusé.");
+        else if (err.status === 404) setError("Route backend absente: /api/people/children/.");
+        else setError("Impossible de charger la liste des enfants.");
         } else {
           setError("Une erreur inattendue est survenue.");
         }
