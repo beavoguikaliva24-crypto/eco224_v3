@@ -27,9 +27,7 @@ class ParentChildSerializer(serializers.ModelSerializer):
         model = Student
         fields = [
             "id",
-            "first_name",
-            "last_name",
-            "contact",
+            "full_name",
             "photo",
             "matricule",
             "classe",
@@ -39,5 +37,6 @@ class ParentChildSerializer(serializers.ModelSerializer):
         ]
 
     def get_classe(self, obj):
-        # si ton modèle classe existe ailleurs, adapte ici
+        if obj.classe:
+            return obj.classe.nom
         return None

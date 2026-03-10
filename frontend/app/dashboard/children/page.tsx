@@ -103,23 +103,27 @@ export default function ChildrenPage() {
 
       {!loading && !error && children.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {children.map((child) => (
-            <article key={child.id} className="rounded-2xl border border-zinc-200 bg-white p-5">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="h-12 w-12 overflow-hidden rounded-full border border-zinc-200 bg-zinc-100">
-                  {child.photo ? (
-                    <img src={child.photo} alt={`${child.first_name} ${child.last_name}`} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <UserCircle className="h-7 w-7 text-zinc-400" />
+            {children.map((child) => (
+                <article key={child.id} className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 shadow-sm transition-hover hover:shadow-md">
+                <div className="mb-4 flex items-center gap-3">
+                    <div className="h-12 w-12 overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800">
+                    {child.photo ? (
+                        <img src={child.photo} alt={`${child.first_name}`} className="h-full w-full object-cover" />
+                    ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                        <UserCircle className="h-7 w-7 text-zinc-400" />
+                        </div>
+                    )}
                     </div>
-                  )}
+                    <div>
+                    <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-50">
+                        {child.first_name} {child.last_name}
+                    </h2>
+                    <p className="text-xs uppercase text-zinc-500 font-mono">
+                        {child.matricule || "SANS MATRICULE"}
+                    </p>
+                    </div>
                 </div>
-                <div>
-                  <h2 className="text-base font-bold">{child.first_name} {child.last_name}</h2>
-                  <p className="text-xs uppercase text-zinc-500">{child.matricule || "Matricule non défini"}</p>
-                </div>
-              </div>
 
               <div className="space-y-2 text-sm text-zinc-600">
                 <p className="flex items-center gap-2"><School className="h-4 w-4" /> Classe: <b>{child.classe || "—"}</b></p>
