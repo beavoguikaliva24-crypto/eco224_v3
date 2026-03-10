@@ -11,42 +11,48 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter(); // Assurez-vous que votre API renvoie l'objet 'user'
+  const router = useRouter();
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
     try {
+      // 1. Définition de l'URL (Utilise l'IP si tu es sur ordinateur pour que le mobile capte aussi)
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
       
-      // On déclare 'response' ICI à l'intérieur du try
-      const response = await axios.post(`${baseUrl}/api/token/`, {
-        contact: formData.phone, // Assurez-vous que c'est bien 'contact' pour Django
-        password: formData.password,
-      });
+      // 2. Appel API
+      // Dans handleSubmit
+		const response = await axios.post(`${baseUrl}/api/token/`, {
+		contact: formData.phone, // Vérifie si ton backend attend 'username', 'phone' ou 'contact'
+		password: formData.password,
+		});
 
-      // Maintenant 'response' est défini, on peut extraire les données
-      const { access, refresh, user } = response.data;
+      // 3. Extraction des données (response est défini ICI)
+      const { access, user } = response.data;
 
-      // 1. Stockage LocalStorage (Client)
+      // 4. Stockage Cookies (Pour le Middleware Next.js)
+      Cookies.set("access", access, { expires: 7, path: '/', sameSite: 'lax' });
+      if (user?.role) {
+        Cookies.set("user_role", user.role, { expires: 7, path: '/', sameSite: 'lax' });
+      }
+
+      // 5. Stockage LocalStorage (Pour les hooks clients)
       localStorage.setItem("access", access);
-      if (user?.role) localStorage.setItem("user_role", user.role);
+      if (user?.role) {
+        localStorage.setItem("user_role", user.role);
+      }
 
-      // 2. Stockage Cookies (Middleware)
-      Cookies.set("access", access, { expires: 7 });
-      if (user?.role) Cookies.set("user_role", user.role, { expires: 7 });
-
-      // 3. Redirection
-      router.push("/dashboard");
+      // 6. Redirection propre
+      window.location.href = "/dashboard";
 
     } catch (err: any) {
       console.error("Erreur de login:", err);
       if (err.response?.status === 401) {
         setError("Identifiants incorrects.");
       } else {
-        setError("Impossible de contacter le serveur.");
+        setError("Le serveur est injoignable (Vérifiez l'IP dans .env)");
       }
     } finally {
       setIsLoading(false);

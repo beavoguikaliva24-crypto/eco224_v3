@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server'; // Correction ici
+import type { NextRequest } from 'next/request';
 
 // On définit strictement qui a accès à quoi
 const ROLE_PERMISSIONS: Record<string, string[]> = {
@@ -13,6 +13,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('access')?.value;
   const role = request.cookies.get('user_role')?.value;
+  const userRole = request.cookies.get('user_role')?.value;
   const { pathname } = request.nextUrl;
 
   // 1. Redirection vers login si accès au dashboard sans token
@@ -24,7 +25,7 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith('/dashboard')) {
     for (const [route, allowedRoles] of Object.entries(ROLE_PERMISSIONS)) {
       if (pathname.startsWith(route)) {
-        if (!role || !allowedRoles.includes(role)) {
+        if (!userRole || !allowedRoles.includes(userRole)) {
           // Si le rôle n'est pas autorisé (ex: PARENT sur /audit), 
           // on le renvoie vers l'accueil du dashboard
           return NextResponse.redirect(new URL('/dashboard', request.url));
