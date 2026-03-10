@@ -14,17 +14,18 @@ export function useAuth() {
           return;
         }
 
+        // Utilise l'URL de votre .env.local ou localhost par défaut
         const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
         
-        // On appelle l'endpoint de profil (ajustez selon votre vue Django)
-        // Si vous n'avez pas d'endpoint /me/, utilisez /api/users/{id}/
-        const response = await axios.get(`${baseUrl}/api/users/me/`, {
+        // L'URL correspond à votre configuration router.register(r"users", UserViewSet)
+        const response = await axios.get(`${baseUrl}/api/accounts/users/me/`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
         setUser(response.data);
       } catch (error) {
-        console.error("Erreur de récupération utilisateur", error);
+        console.error("Session expirée ou erreur serveur");
+        localStorage.removeItem('access');
       } finally {
         setLoading(false);
       }

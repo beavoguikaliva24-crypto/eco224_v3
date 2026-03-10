@@ -16,3 +16,9 @@ class MesNotificationsViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(destinataire=self.request.user)
+
+class AuditViewSet(viewsets.ModelViewSet):
+    def get_permissions(self):
+        if self.request.user.role != 'DEV':
+            return [permissions.DenyAll()] # Seul le DEV peut passer
+        return [permissions.IsAuthenticated()]

@@ -7,7 +7,8 @@ import {
   LayoutDashboard, Users, GraduationCap, FileText, BookOpen,
   ShieldAlert, CreditCard, Bell, School, HandCoins,
   ClipboardCheck, Settings, LogOut, Menu, X, History, 
-  UserCircle
+  UserCircle,
+  Loader2
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -17,36 +18,44 @@ const menuGroups = [
   {
     title: "Général",
     items: [
-      { name: "Vue d'ensemble", href: "/dashboard", icon: LayoutDashboard },
-      { name: "Notifications", href: "/dashboard/notifications", icon: Bell },
+      { name: "Vue d'ensemble", href: "/dashboard", icon: LayoutDashboard }, // Tout le monde
+      { name: "Notifications", href: "/dashboard/notifications", icon: Bell }, // Tout le monde
     ]
   },
   {
     title: "Scolarité",
     items: [
-      { name: "Inscriptions", href: "/dashboard/enrollment", icon: GraduationCap }, // enrollment app
-      { name: "Classes & École", href: "/dashboard/school", icon: School }, // school app
-      { name: "Matières", href: "/dashboard/schedule", icon: BookOpen }, // schedule app
-      { name: "Notes & Examens", href: "/dashboard/grading", icon: FileText }, // grading app
-      { name: "Discipline", href: "/dashboard/discipline", icon: ShieldAlert }, // discipline app
-      { name: "Paiements", href: "/dashboard/paiements", icon: HandCoins}, // billing app
+      { name: "Inscriptions", href: "/dashboard/enrollment", icon: GraduationCap, roles: ["DEV", "ADMIN", "STAFF"] },
+      { name: "Classes & École", href: "/dashboard/school", icon: School, roles: ["DEV", "ADMIN", "STAFF", "TEACHER"] },
+      { name: "Matières", href: "/dashboard/schedule", icon: BookOpen, roles: ["DEV", "ADMIN", "STAFF", "TEACHER", "STUDENT"] },
+      { name: "Notes & Examens", href: "/dashboard/grading", icon: FileText, roles: ["DEV", "ADMIN", "STAFF", "TEACHER", "STUDENT", "PARENT"] },
+      { name: "Discipline", href: "/dashboard/discipline", icon: ShieldAlert, roles: ["DEV", "ADMIN", "STAFF", "TEACHER", "PARENT"] },
+      { name: "Paiements", href: "/dashboard/paiements", icon: HandCoins, roles: ["DEV", "ADMIN", "STAFF", "PARENT"] },
     ]
   },
   {
     title: "Administration",
     items: [
-      { name: "Utilisateurs", href: "/dashboard/accounts", icon: Users }, // accounts app
-      { name: "Personnel & RH", href: "/dashboard/people", icon: ClipboardCheck }, // people app
-      { name: "Facturation", href: "/dashboard/billing", icon: CreditCard }, // billing app
-      { name: "Logs & Audit", href: "/dashboard/audit", icon: History }, // audit app
+      { name: "Utilisateurs", href: "/dashboard/accounts", icon: Users, roles: ["DEV", "ADMIN"] },
+      { name: "Personnel & RH", href: "/dashboard/people", icon: ClipboardCheck, roles: ["DEV", "ADMIN", "STAFF"] },
+      { name: "Facturation", href: "/dashboard/billing", icon: CreditCard, roles: ["DEV", "ADMIN"] },
+      { name: "Logs & Audit", href: "/dashboard/audit", icon: History, roles: ["DEV"] }, // Uniquement pour le développeur
     ]
   }
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const pathname = usePathname();
   const { user, loading } = useAuth();
+  const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Fonction de filtrage
+  const filteredMenu = menuGroups.map(group => ({
+    ...group,
+    items: group.items.filter(item => 
+      !item.roles || (user && item.roles.includes(user.role))
+    )
+  })).filter(group => group.items.length > 0); // On cache le titre du groupe si vide
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -59,7 +68,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <button onClick={() => setSidebarOpen(false)}><X size={24} /></button>
           </div>
           <nav className="space-y-2">
-            {menuGroups.map((group) => (
+            {filteredMenu.map((group) => (
               <div key={group.title}>
                 <h3 className="px-4 text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
                   {group.title}
@@ -133,43 +142,57 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Reste du contenu (Header + Main) */}
       {/* Main Content Area */}
-      <div className="lg:pl-72 flex flex-col min-h-screen">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md px-6">
-          <button className="lg:hidden" onClick={() => setSidebarOpen(true)}><Menu size={24} /></button>
-          <div className="ml-auto flex items-center gap-4">
-            <button className="p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors relative">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-white dark:border-zinc-900" />
-            </button>
-            <div className="h-8 w-px bg-zinc-200 dark:border-zinc-800 mx-2" />
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-          {loading ? (
-            <div className="h-4 w-20 bg-zinc-200 animate-pulse rounded" />
-          ) : (
-            <>
-              <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-                {user?.first_name} {user?.last_name}
-              </p>
-              <p className="text-xs text-zinc-500 uppercase">
-                {user?.role} {/* Affiche DEV, ADMIN, TEACHER, etc. */}
-              </p>
-            </>
-          )}
-        </div>
-              {/* Affichage de la photo de profil réelle */}
-        <div className="h-10 w-10 rounded-full overflow-hidden bg-zinc-100 border border-zinc-200">
-          {user?.photo ? (
-            <img src={user.photo} alt="Profil" className="h-full w-full object-cover" />
-          ) : (
-            <UserCircle size={40} className="text-zinc-400" />
-          )}
-        </div>
-            </div>
-          </div>
-        </header>
+        <div className="lg:pl-72 flex flex-col min-h-screen">
+            <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md px-6">
+                <button className="lg:hidden" onClick={() => setSidebarOpen(true)}><Menu size={24} /></button>
+                <div className="flex items-center gap-4">
+                    <input
+                        type="text"
+                        placeholder="Rechercher..."
+                        className="hidden sm:block rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-300 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:ring-zinc-600"
+                    />
+                </div>
+                <div className="ml-auto flex items-center gap-4">
+                    <button className="p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors relative">
+                        <Bell size={20} />
+                        <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-white dark:border-zinc-900" />
+                    </button>
+                    <div className="h-8 w-px bg-zinc-200 dark:border-zinc-800 mx-2" />
+                        <div className="flex items-center gap-3">
+                            <div className="text-right hidden sm:block">
+                                {loading ? (
+                                    <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+                                ) : (
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-right hidden sm:block">
+                                            <p className="text-sm font-bold text-zinc-950 dark:text-white leading-none">
+                                                {user?.first_name} {user?.last_name}
+                                            </p>
+                                            <p className="text-[10px] font-medium text-zinc-500 uppercase mt-1">
+                                                {/* Affiche le libellé du rôle (ex: Administrateur) */}
+                                                {user?.role} • {user?.contact}
+                                            </p>
+                                        </div>
+                                        {/* Gestion de la photo de profil */}
+                                        <div className="h-10 w-10 rounded-full border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-zinc-100 flex items-center justify-center">
+                                            {user?.photo ? (
+                                                <img 
+                                                src={user.photo} 
+                                                alt="Profil" 
+                                                className="h-full w-full object-cover"
+                                                />
+                                            ) : (
+                                                <UserCircle className="h-6 w-6 text-zinc-400" />
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                    </div>
+                </div>
+                </header>
 
-        <main className="p-6 lg:p-8 flex-grow">
+            <main className="p-6 lg:p-8 flex-grow">
           {children}
         </main>
       </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Phone, Loader2, Eye, EyeOff } from "lucide-react";
+import Cookies from 'js-cookie';
 import axios from "axios";
 
 export default function LoginPage() {
@@ -12,42 +13,33 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ phone: "", password: "" });
   const [error, setError] = useState("");
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
 
-    try {
-      // CORRECTION MAJEURE ICI :
-      // On force 127.0.0.1 (localhost) si aucune variable d'environnement n'est détectée.
-      // Cela évite de chercher une adresse IP (10.15.8.179) qui n'existe peut-être plus.
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
-      
-      console.log("Tentative de connexion au backend via :", baseUrl);
+  try {
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/token/`, {
+      contact: formData.contact, // Utilise le champ contact
+      password: formData.password
+    });
 
-      const response = await axios.post(`${baseUrl}/api/token/`, {
-        contact: formData.phone,
-        password: formData.password,
-      });
+    const { access, refresh, user } = response.data;
 
-      localStorage.setItem("access", response.data.access);
-      localStorage.setItem("refresh", response.data.refresh);
-      router.push("/dashboard");
-    } catch (err: any) {
-      console.error("Erreur détaillée:", err);
-      if (!err.response) {
-        // Erreur réseau (le serveur ne répond pas du tout)
-        setError("Le serveur est inaccessible sur http://127.0.0.1:8000. Assurez-vous que le backend Django est lancé.");
-      } else if (err.response.status === 401) {
-        setError("Numéro de téléphone ou mot de passe incorrect.");
-      } else {
-        setError("Une erreur est survenue. Veuillez réessayer.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
+    // Stockage pour le client (localStorage)
+    localStorage.setItem('access', access);
+    
+    // Stockage pour le Middleware (Cookies)
+    Cookies.set('access', access, { expires: 7 }); // expire dans 7 jours
+    Cookies.set('user_role', user.role, { expires: 7 });
+
+    router.push('/dashboard');
+  } catch (error) {
+    // Gestion de l'erreur visible sur votre capture
+    setError("Numéro ou mot de passe incorrect.");
+  } finally {
+    setIsLoading(false);
   }
-
+};
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-300 px-4 py-6 dark:bg-zinc-950">
       <div className="flex w-full max-w-6xl overflow-hidden rounded-[2rem] border border-zinc-600 bg-white shadow-2xl shadow-zinc-200/50 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
