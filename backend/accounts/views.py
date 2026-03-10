@@ -1,10 +1,11 @@
 # backend/accounts/views.py
 
-from rest_framework import viewsets, permissions, generics
+from rest_framework import viewsets, permissions, generics, serializers
 from rest_framework.decorators import action  # <--- AJOUTEZ CETTE LIGNE
 from rest_framework.response import Response # Assurez-vous que Response est aussi là
-from .models import User
+from .models import User, Student
 from .serializers import UserSerializer, ChildSerializer
+from people.models import Student 
 
 class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
@@ -35,18 +36,36 @@ class IsDevOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role == 'DEV'
 
+class ParentChildSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source="prenom1", read_only=True)
+    last_name = serializers.CharField(source="nom", read_only=True)
+    contact = serializers.CharField(source="user.contact", read_only=True, default="")
+    photo = serializers.ImageField(source="photo", read_only=True)
+
+    class Meta:
+        model = Student
+        fields = [
+            "id",
+            "full_name",
+            "matricule",
+            "photo",
+            "date_naissance",
+            "lieu_naissance",
+        ]
+
+
 class ParentChildrenListView(generics.ListAPIView):
-    serializer_class = ChildSerializer
+    serializer_class = ParentChildSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        if getattr(user, "role", None) != "PARENT":
-            return User.objects.none()
+        u = self.request.user
+        if u.role != "PARENT":
+            return Student.objects.none()
 
-        # Suppose relation parent -> children
-        # Adapte selon ton modèle:
-        # - user.children.all()
-        # - User.objects.filter(parent=user)
-        # - StudentProfile.objects.filter(parent=user)...
-        return user.children.all().select_related("current_class")
+        parent_profile = getattr(u, "parent_profile", None)
+        if not parent_profile:
+            return Student.objects.none()
+
+        return Student.objects.filter(parents=parent_profile, is_active=True).select_related("user")
+    
