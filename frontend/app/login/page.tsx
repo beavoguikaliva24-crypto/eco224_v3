@@ -7,39 +7,39 @@ import Cookies from 'js-cookie';
 import axios from "axios";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({ phone: "", password: "" });
-  const [error, setError] = useState("");
+	const router = useRouter();
+	const [isLoading, setIsLoading] = useState(false);
+	const [showPassword, setShowPassword] = useState(false);
+	const [formData, setFormData] = useState({ phone: "", password: "" });
+	const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsLoading(true);
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setIsLoading(true);
 
-  try {
-    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/token/`, {
-      contact: formData.contact, // Utilise le champ contact
-      password: formData.password
-    });
+		try {
+			const response = await axios.post(`${baseUrl}/api/token/`, {
+			contact: formData.phone, // Le nom de la clé doit être 'contact'
+			password: formData.password,
+			});
 
-    const { access, refresh, user } = response.data;
+			const { access, refresh, user } = response.data;
 
-    // Stockage pour le client (localStorage)
-    localStorage.setItem('access', access);
-    
-    // Stockage pour le Middleware (Cookies)
-    Cookies.set('access', access, { expires: 7 }); // expire dans 7 jours
-    Cookies.set('user_role', user.role, { expires: 7 });
+			// Stockage pour le client (localStorage)
+			localStorage.setItem('access', access);
+			
+			// Stockage pour le Middleware (Cookies)
+			Cookies.set('access', access, { expires: 7 }); // expire dans 7 jours
+			Cookies.set('user_role', user.role, { expires: 7 });
 
-    router.push('/dashboard');
-  } catch (error) {
-    // Gestion de l'erreur visible sur votre capture
-    setError("Numéro ou mot de passe incorrect.");
-  } finally {
-    setIsLoading(false);
-  }
-};
+			router.push('/dashboard');
+		} catch (error) {
+			// Gestion de l'erreur visible sur votre capture
+			setError("Numéro ou mot de passe incorrect.");
+		} finally {
+			setIsLoading(false);
+		}
+	};
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-300 px-4 py-6 dark:bg-zinc-950">
       <div className="flex w-full max-w-6xl overflow-hidden rounded-[2rem] border border-zinc-600 bg-white shadow-2xl shadow-zinc-200/50 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
