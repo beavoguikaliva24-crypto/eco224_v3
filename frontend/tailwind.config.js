@@ -17,5 +17,5 @@ module.exports = {
         shake: 'shake 0.2s ease-in-out 0s 2',
       }
     } },
-  plugins: [require("daisyui")],
+  plugins: [],
 };
