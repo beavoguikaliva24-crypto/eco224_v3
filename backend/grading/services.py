@@ -1,12 +1,15 @@
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404
-from .models import BulletinPeriodique, BulletinAnnuel, Note
+from .models import BulletinPeriode, BulletinAnnuel, Note
 from enrollment.models import Affectation
 from school.models import MatiereClasse, Periode
 from discipline.services import obtenir_bilan_discipline
+from decimal import Decimal # <--- L'IMPORTATION MANQUANTE
 
 def calculer_bulletin_intelligent(affectation, periode):
-    # 1. On liste toutes les matières prévues pour la classe
+    """
+    Calcule la moyenne d'une période pour un élève en tenant compte des absences.
+    """
     matieres_programme = MatiereClasse.objects.filter(
         classe=affectation.classe,
         annee_scolaire=affectation.annee_scolaire
@@ -48,11 +51,12 @@ def calculer_bulletin_intelligent(affectation, periode):
             appreciation = "Absent / Non noté"
             total_points_eleve += 0
 
+        # La ligne qui causait l'erreur NameError est maintenant valide grâce à l'import
         details.append({
             'matiere': mc.matiere.nom,
-            'moyenne': moyenne_affichable,
-            'coef': coef,
-            'points': points if points is not None else "N/A",
+            'moyenne': float(moyenne_affichable) if isinstance(moyenne_affichable, (int, float, Decimal)) else moyenne_affichable,
+            'coef': float(coef),
+            'points': float(points) if points is not None else "N/A",
             'appreciation': appreciation
         })
 
@@ -63,8 +67,13 @@ def calculer_bulletin_intelligent(affectation, periode):
         'details': details,
         'coef_total_calcule': total_coefficients_programme
     }
+    
+# ... Le reste du fichier services.py reste identique ...
 
 def calculer_moyenne_annuelle_eleve(affectation):
+    """
+    Calcule la moyenne annuelle en se basant sur les moyennes de chaque période.
+    """
     periodes = Periode.objects.filter(annee_scolaire=affectation.annee_scolaire).order_by('id')
     somme_moyennes = 0
     periodes_comptees = 0
@@ -72,6 +81,7 @@ def calculer_moyenne_annuelle_eleve(affectation):
 
     for periode in periodes:
         data = calculer_bulletin_intelligent(affectation, periode)
+        # On ne compte une période que si elle a été évaluée
         if data['coef_total_calcule'] > 0:
             somme_moyennes += data['moyenne_generale']
             periodes_comptees += 1
@@ -88,6 +98,9 @@ def calculer_moyenne_annuelle_eleve(affectation):
     }
 
 def calculer_rangs_classe_custom(affectations_classe, type_bulletin="periode", periode=None):
+    """
+    Calcule le rang de chaque élève dans une classe.
+    """
     scores = []
     for aff in affectations_classe:
         if type_bulletin == "periode":
@@ -99,21 +112,24 @@ def calculer_rangs_classe_custom(affectations_classe, type_bulletin="periode", p
     scores.sort(key=lambda x: x['moyenne'], reverse=True)
     rangs = {}
     current_rang = 0
-    last_moyenne = -1
+    last_moyenne = -1.0 # Initialiser à une valeur impossible
 
-    for score in scores:
+    for i, score in enumerate(scores):
         if score['moyenne'] != last_moyenne:
-            current_rang += 1
+            current_rang = i + 1
         
         nb_ex_aequo = sum(1 for s in scores if s['moyenne'] == score['moyenne'])
         suffixe = "er" if current_rang == 1 else "ème"
-        mention_ex = " ex" if nb_ex_aequo > 1 else ""
+        mention_ex = " ex" if nb_ex_aequo > 1 and score['moyenne'] > 0 else ""
         rangs[score['affectation_id']] = f"{current_rang}{suffixe}{mention_ex}"
         last_moyenne = score['moyenne']
     
     return rangs
 
 def calculer_stats_classe(camarades, type_bulletin="periode", periode=None):
+    """
+    Calcule les statistiques (max, min, moyenne) pour une classe.
+    """
     moyennes = []
     for aff in camarades:
         if type_bulletin == "periode":
@@ -131,9 +147,10 @@ def calculer_stats_classe(camarades, type_bulletin="periode", periode=None):
         "moyenne_classe": float(round(sum(moyennes) / len(moyennes), 2))
     }
 
-# --- FONCTIONS DE GÉNÉRATION ET SAUVEGARDE (CELLES QUI MANQUAIENT) ---
-
 def generer_et_sauvegarder_bulletin_periodique(affectation_id: int, periode_id: int):
+    """
+    Orchestre le calcul de toutes les données d'un bulletin périodique et le sauvegarde.
+    """
     affectation = get_object_or_404(Affectation, pk=affectation_id)
     periode = get_object_or_404(Periode, pk=periode_id)
     camarades = Affectation.objects.filter(classe=affectation.classe, annee_scolaire=affectation.annee_scolaire)
@@ -157,6 +174,9 @@ def generer_et_sauvegarder_bulletin_periodique(affectation_id: int, periode_id: 
     return bulletin_obj
 
 def generer_et_sauvegarder_bulletin_annuel(affectation_id: int):
+    """
+    Orchestre le calcul de toutes les données d'un bulletin annuel et le sauvegarde.
+    """
     affectation = get_object_or_404(Affectation, pk=affectation_id)
     camarades = Affectation.objects.filter(classe=affectation.classe, annee_scolaire=affectation.annee_scolaire)
 
@@ -168,7 +188,7 @@ def generer_et_sauvegarder_bulletin_annuel(affectation_id: int):
         defaults={
             'moyenne_annuelle': data_annuel.get('moyenne_annuelle', 0.0),
             'rang': rangs_annuels.get(affectation.id, "N/A"),
-            # 'appreciation_annuelle': # Logique à définir si nécessaire
+            # 'appreciation_annuelle': # Logique à définir si vous en avez une
         }
     )
     return bulletin_obj

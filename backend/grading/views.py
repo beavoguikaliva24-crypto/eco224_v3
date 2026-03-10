@@ -7,8 +7,7 @@ from django.shortcuts import get_object_or_404
 # Nouveaux imports
 from .models import Note, BulletinPeriode, BulletinAnnuel
 from .serializers import NoteSerializer, BulletinPeriodeSerializer, BulletinAnnuelSerializer
-from .services import generer_et_sauvegarder_bulletin_periode, generer_et_sauvegarder_bulletin_annuel
-
+from .services import *
 
 class NoteViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
