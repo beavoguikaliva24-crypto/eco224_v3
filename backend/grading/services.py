@@ -8,7 +8,8 @@ from decimal import Decimal # <--- L'IMPORTATION MANQUANTE
 
 def calculer_bulletin_intelligent(affectation, periode):
     """
-    Calcule la moyenne d'une période pour un élève en tenant compte des absences.
+    CORRIGÉ : Calcule la moyenne en divisant TOUJOURS par le total des coefficients
+    du programme. Une matière non notée vaut 0.
     """
     matieres_programme = MatiereClasse.objects.filter(
         classe=affectation.classe,
@@ -21,45 +22,37 @@ def calculer_bulletin_intelligent(affectation, periode):
 
     for mc in matieres_programme:
         coef = mc.coefficient
-        total_coefficients_programme += coef
+        total_coefficients_programme += coef # On additionne TOUS les coefficients.
 
         note_eleve = Note.objects.filter(
             affectation=affectation, 
             matiereclasse=mc, 
             periodicite=periode
         ).first()
-        
-        evaluation_existe_dans_classe = Note.objects.filter(
-            matiereclasse=mc,
-            periodicite=periode,
-            affectation__classe=affectation.classe
-        ).exists()
 
+        # Logique simplifiée :
         if note_eleve and note_eleve.moyenne is not None:
+            # Cas 1 : L'élève a une note.
             points = note_eleve.moyenne * coef
             moyenne_affichable = note_eleve.moyenne
             appreciation = note_eleve.appreciation
             total_points_eleve += points
-        elif not evaluation_existe_dans_classe:
-            total_coefficients_programme -= coef
-            moyenne_affichable = "Non évalué"
-            appreciation = "Saisie non effectuée"
-            points = None
         else:
+            # Cas 2 : L'élève n'a pas de note. Il obtient 0.
             points = 0
             moyenne_affichable = 0
             appreciation = "Absent / Non noté"
-            total_points_eleve += 0
+            total_points_eleve += 0 # On ajoute 0 à son total, mais le coef compte.
 
-        # La ligne qui causait l'erreur NameError est maintenant valide grâce à l'import
         details.append({
             'matiere': mc.matiere.nom,
             'moyenne': float(moyenne_affichable) if isinstance(moyenne_affichable, (int, float, Decimal)) else moyenne_affichable,
             'coef': float(coef),
-            'points': float(points) if points is not None else "N/A",
+            'points': float(points),
             'appreciation': appreciation
         })
 
+    # Le diviseur est maintenant toujours le total des coefficients du programme.
     moyenne_generale = total_points_eleve / total_coefficients_programme if total_coefficients_programme > 0 else 0
     
     return {
@@ -160,7 +153,7 @@ def generer_et_sauvegarder_bulletin_periodique(affectation_id: int, periode_id: 
     stats = calculer_stats_classe(camarades, type_bulletin="periode", periode=periode)
     bilan_disc = obtenir_bilan_discipline(affectation, periode)
 
-    bulletin_obj, created = BulletinPeriodique.objects.update_or_create(
+    bulletin_obj, created = BulletinPeriode.objects.update_or_create(
         affectation=affectation,
         periode=periode,
         defaults={
