@@ -1,51 +1,57 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Lock, Phone, Loader2, Eye, EyeOff } from "lucide-react";
-import Cookies from "js-cookie";
+import React, { useState } from "react";
 import axios from "axios";
-import { API_BASE_URL } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import { Phone, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ phone: "", password: "" });
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter(); // Assurez-vous que votre API renvoie l'objet 'user'
 
-  // 1. Assure-toi d'utiliser "contact" car c'est ton USERNAME_FIELD
-// 2. Supprime toute référence à ApiError qui n'est pas défini
 const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError("");
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
-    
-    const response = await axios.post(`${baseUrl}/api/token/`, {
-      contact: formData.phone, // Utilise 'contact' pour Django
-      password: formData.password,
-    });
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+      
+      // On déclare 'response' ICI à l'intérieur du try
+      const response = await axios.post(`${baseUrl}/api/token/`, {
+        contact: formData.phone, // Assurez-vous que c'est bien 'contact' pour Django
+        password: formData.password,
+      });
 
-    // Stockage pour le client et le middleware
-    localStorage.setItem("access", response.data.access);
-    document.cookie = `access=${response.data.access}; path=/`;
-    
-    // On redirige vers le dashboard
-    router.push("/dashboard");
-  } catch (err: any) {
-    // Gestion propre sans ApiError
-    if (err.response?.status === 401) {
-      setError("Identifiants incorrects (numéro ou mot de passe).");
-    } else {
-      setError("Erreur de connexion au serveur.");
+      // Maintenant 'response' est défini, on peut extraire les données
+      const { access, refresh, user } = response.data;
+
+      // 1. Stockage LocalStorage (Client)
+      localStorage.setItem("access", access);
+      if (user?.role) localStorage.setItem("user_role", user.role);
+
+      // 2. Stockage Cookies (Middleware)
+      Cookies.set("access", access, { expires: 7 });
+      if (user?.role) Cookies.set("user_role", user.role, { expires: 7 });
+
+      // 3. Redirection
+      router.push("/dashboard");
+
+    } catch (err: any) {
+      console.error("Erreur de login:", err);
+      if (err.response?.status === 401) {
+        setError("Identifiants incorrects.");
+      } else {
+        setError("Impossible de contacter le serveur.");
+      }
+    } finally {
+      setIsLoading(false);
     }
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-300 px-4 py-6 dark:bg-zinc-950">
