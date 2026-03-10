@@ -61,19 +61,14 @@ class ParentChildSerializer(serializers.ModelSerializer):
         return obj.photo.url
 
     def get_classe(self, obj):
-        # selon ton modèle de scolarité (Affectation/Classe)
-        affectation = getattr(obj, "affectation_actuelle", None)
-        if affectation and getattr(affectation, "classe", None):
-            return affectation.classe.nom
-        # fallback si relation directe existe
-        if hasattr(obj, "classe") and obj.classe:
-            return getattr(obj.classe, "nom", None) or str(obj.classe)
-        return "Non définie"
+    aff = obj.affectation_actuelle
+    if aff and aff.classe:
+        return aff.classe.nom # Assure-toi que le champ s'appelle 'nom' dans ton modèle Classe
+    return "Non inscris"
 
     def get_annee_scolaire(self, obj):
-        affectation = getattr(obj, "affectation_actuelle", None)
-        if affectation and getattr(affectation, "annee_scolaire", None):
-            return getattr(affectation.annee_scolaire, "libelle", None) or str(affectation.annee_scolaire)
-        if hasattr(obj, "annee_scolaire") and obj.annee_scolaire:
-            return getattr(obj.annee_scolaire, "libelle", None) or str(obj.annee_scolaire)
-        return "Non définie"
+        aff = obj.affectation_actuelle
+        if aff and aff.annee_scolaire:
+            # On utilise le champ de ton modèle Affectation: annee_scolaire.annee_scolaire
+            return str(aff.annee_scolaire.annee_scolaire) 
+        return "N/A"

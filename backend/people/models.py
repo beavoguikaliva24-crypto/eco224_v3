@@ -59,6 +59,13 @@ class Student(models.Model):
 
     is_active = models.BooleanField(default=True, verbose_name="Élève actif")
 
+    @property
+    def affectation_actuelle(self):
+        """Récupère la dernière affectation de l'élève"""
+        # On importe ici pour éviter les imports circulaires
+        from .models import Affectation 
+        return Affectation.objects.filter(eleve=self).select_related('classe', 'annee_scolaire').last()
+
     def nettoyer_textes(self, text):
         if not text: return ""
         # Normalisation pour enlever les accents (ex: É -> E)

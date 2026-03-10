@@ -6,23 +6,27 @@ import { getAccessToken } from "@/lib/auth";
 import { apiFetch, ApiError } from "@/lib/api";
 
 type Child = {
-  id?: number;
-  full_name?: string;
-  matricule?: string;
-  photo?: string | null;
-  classe?: string;
-  annee_scolaire?: string;
+  id: number;
+  full_name: string;
+  matricule: string;
+  photo: string | null;
+  classe: string;          // Correspond à get_classe
+  annee_scolaire: string;  // Correspond à get_annee_scolaire
 };
 
 type ChildrenResponse = { results?: Child[] } | Child[];
 
-function normalizeChild(raw: Child): Child {
+function normalizeChild(raw: any): Child {
   return {
-    ...raw,
-    full_name: raw.full_name || "Nom non défini",
+    id: raw.id,
+    // Adaptation aux champs réels de ton Student model (prenom1, nom)
+    full_name: raw.full_name || `${raw.prenom1 ?? ''} ${raw.nom ?? ''}`.trim() || "Nom inconnu",
+    matricule: raw.matricule,
+    photo: raw.photo,
+    classe: raw.classe_label || raw.classe || "Non définie", 
+    annee_scolaire: raw.annee_scolaire || "2023-2024",
   };
 }
-
 export default function ChildrenPage() {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
