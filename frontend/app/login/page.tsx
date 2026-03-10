@@ -20,32 +20,15 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/token/`, {
-        contact: formData.phone.trim(),
-        password: formData.password,
-      });
-
-      const { access, refresh, user } = response.data;
-
-      // Stockage client
-      localStorage.setItem("eco224_access", access);
-      localStorage.setItem("eco224_refresh", refresh);
-
-      // Stockage middleware
-      Cookies.set("access", access, { expires: 7 });
-      if (user?.role) {
-        Cookies.set("user_role", user.role, { expires: 7 });
-      }
-
+      await login(formData.phone.trim(), formData.password);
       router.push("/dashboard");
-    } catch (err: any) {
-      const status = err?.response?.status;
-      if (status === 401) {
-        setError("Numéro ou mot de passe incorrect.");
-      } else if (status >= 500) {
-        setError("Erreur serveur, veuillez réessayer.");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401) setError("Numéro ou mot de passe incorrect.");
+        else if (err.status >= 500) setError("Erreur serveur, veuillez réessayer.");
+        else setError("Connexion impossible. Vérifiez les informations saisies.");
       } else {
-        setError("Impossible de se connecter. Vérifiez votre connexion.");
+        setError("Une erreur inattendue est survenue.");
       }
     } finally {
       setIsLoading(false);

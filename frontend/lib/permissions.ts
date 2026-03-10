@@ -1,5 +1,21 @@
 export type AppRole = "DEV" | "ADMIN" | "STAFF" | "TEACHER" | "STUDENT" | "PARENT";
 
+export type MenuItem = {
+  name: string;
+  href: string;
+  icon?: unknown;
+  roles?: AppRole[];
+};
+
+export type MenuGroup = {
+  title: string;
+  items: MenuItem[];
+};
+
+/**
+ * Autorisations côté routing (middleware) :
+ * chaque route dashboard protégée + rôles autorisés
+ */
 export const ROUTE_ACCESS: Record<string, AppRole[]> = {
   "/dashboard/enrollment": ["DEV", "ADMIN", "STAFF"],
   "/dashboard/school": ["DEV", "ADMIN", "STAFF", "TEACHER"],
