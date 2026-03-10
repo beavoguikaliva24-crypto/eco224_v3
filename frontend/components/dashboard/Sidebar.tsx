@@ -1,65 +1,47 @@
 "use client";
 
-import Cookies from "js-cookie";
-import { useMemo } from "react";
-import {
-  LayoutDashboard,
-  Bell,
-  GraduationCap,
-  School,
-  BookOpen,
-  FileText,
-  ShieldAlert,
-  HandCoins,
-  UserCircle,
-  Users,
-  ClipboardCheck,
-  CreditCard,
-  History,
-} from "lucide-react";
-import type { AppRole, MenuGroup } from "@/lib/permissions";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useVisibleMenuGroups } from "./sidebar-menu";
 
-// Menu source
-const menuGroups: MenuGroup[] = [
-  {
-    title: "Général",
-    items: [
-      { name: "Vue d'ensemble", href: "/dashboard", icon: LayoutDashboard },
-      { name: "Notifications", href: "/dashboard/notifications", icon: Bell },
-    ],
-  },
-  {
-    title: "Scolarité",
-    items: [
-      { name: "Inscriptions", href: "/dashboard/enrollment", icon: GraduationCap, roles: ["DEV", "ADMIN", "STAFF"] },
-      { name: "Classes & École", href: "/dashboard/school", icon: School, roles: ["DEV", "ADMIN", "STAFF", "TEACHER"] },
-      { name: "Matières", href: "/dashboard/schedule", icon: BookOpen, roles: ["DEV", "ADMIN", "STAFF", "TEACHER", "STUDENT"] },
-      { name: "Notes & Examens", href: "/dashboard/grading", icon: FileText, roles: ["DEV", "ADMIN", "STAFF", "TEACHER", "STUDENT", "PARENT"] },
-      { name: "Discipline", href: "/dashboard/discipline", icon: ShieldAlert, roles: ["DEV", "ADMIN", "STAFF", "TEACHER", "PARENT"] },
-      { name: "Paiements", href: "/dashboard/paiements", icon: HandCoins, roles: ["DEV", "ADMIN", "STAFF", "PARENT"] },
-      { name: "Enfants", href: "/dashboard/children", icon: UserCircle, roles: ["DEV", "ADMIN", "STAFF", "PARENT"] },
-    ],
-  },
-  {
-    title: "Administration",
-    items: [
-      { name: "Utilisateurs", href: "/dashboard/accounts", icon: Users, roles: ["DEV", "ADMIN"] },
-      { name: "Personnel & RH", href: "/dashboard/people", icon: ClipboardCheck, roles: ["DEV", "ADMIN", "STAFF"] },
-      { name: "Facturation", href: "/dashboard/billing", icon: CreditCard, roles: ["DEV", "ADMIN"] },
-      { name: "Logs & Audit", href: "/dashboard/audit", icon: History, roles: ["DEV"] },
-    ],
-  },
-];
+type SidebarProps = {
+  mobile?: boolean;
+  onNavigate?: () => void;
+};
 
-export function useVisibleMenuGroups() {
-  return useMemo(() => {
-    const role = Cookies.get("user_role") as AppRole | undefined;
+export default function Sidebar({ mobile = false, onNavigate }: SidebarProps) {
+  const pathname = usePathname();
+  const groups = useVisibleMenuGroups();
 
-    return menuGroups
-      .map((group) => ({
-        ...group,
-        items: group.items.filter((item) => !item.roles || (role ? item.roles.includes(role) : false)),
-      }))
-      .filter((group) => group.items.length > 0);
-  }, []);
+  return (
+    <aside className={mobile ? "w-64 p-4" : "w-72 p-6 border-r border-zinc-200"}>
+      {groups.map((group) => (
+        <div key={group.title} className="mb-6">
+          <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-zinc-400">{group.title}</h3>
+          <nav className="space-y-1">
+            {group.items.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              const Icon = item.icon as React.ComponentType<{ className?: string }>;
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${
+                    isActive
+                      ? "bg-zinc-900 text-white"
+                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                  }`}
+                >
+                  {Icon ? <Icon className="h-4 w-4" /> : null}
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      ))}
+    </aside>
+  );
 }
