@@ -21,8 +21,10 @@ export default function LoginPage() {
 
     try {
       // Utilisation de la variable d'environnement du fichier .env.local
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://10.15.8.179:8000" || "http://beapc:8000";
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000" || "http://beapc:8000"; // Valeur de secours pour le développement local
       
+      console.log("Tentative de connexion vers :", baseUrl); // Pour le débogage dans la console F12
+
       const response = await axios.post(`${baseUrl}/api/token/`, {
         contact: formData.phone,
         password: formData.password,
