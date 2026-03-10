@@ -1,20 +1,15 @@
-# Python / Django
+# Environnement virtuel
+.venv/
 __pycache__/
 *.py[cod]
-db.sqlite3
-media/
-.env
-venv/
 
-# Next.js / Node
+# Base de données locale
+db.sqlite3
+
+# Node / Next.js
 node_modules/
 .next/
-out/
-build/
-.DS_Store
+frontend/.env.local
 
-# VS Code
-.vscode/
-
-# MacOS
+# Divers
 .DS_Store
