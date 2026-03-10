@@ -7,23 +7,29 @@ import { apiFetch, ApiError } from "@/lib/api";
 
 type Child = {
   id: number;
-  first_name: string;
-  last_name: string;
+  first_name?: string; // si backend mappe depuis prenom1
+  last_name?: string;  // si backend mappe depuis nom
+  prenom1?: string;    // fallback direct Student
+  nom?: string;        // fallback direct Student
   matricule?: string;
-  classe?: string;
+  classe?: string | null;
   photo?: string | null;
   contact?: string;
   school_name?: string;
+  date_naissance?: string;
+  lieu_naissance?: string;
 };
 
 type ChildrenResponse = { results?: Child[] } | Child[];
 
-const CHILDREN_ENDPOINTS = [
-  process.env.NEXT_PUBLIC_CHILDREN_ENDPOINT, // ex: /api/students/my-children/
-  "/api/children/",
-  "/api/parents/children/",
-  "/api/students/my-children/",
-].filter(Boolean) as string[];
+function normalizeChild(raw: Child): Child {
+  return {
+    ...raw,
+    first_name: raw.first_name ?? raw.prenom1 ?? "",
+    last_name: raw.last_name ?? raw.nom ?? "",
+    classe: raw.classe ?? null,
+  };
+}
 
 export default function ChildrenPage() {
   const [children, setChildren] = useState<Child[]>([]);
@@ -42,32 +48,19 @@ export default function ChildrenPage() {
           return;
         }
 
-        let data: ChildrenResponse | null = null;
-        let found = false;
-
-        for (const endpoint of CHILDREN_ENDPOINTS) {
-          try {
-            const res = await apiFetch<ChildrenResponse>(endpoint, { token });
-            data = res;
-            found = true;
-            break;
-          } catch (err) {
-            if (err instanceof ApiError && err.status === 404) continue;
-            throw err;
-          }
-        }
-
-        if (!found || !data) {
-          setError("Aucun endpoint enfants trouvé. Configure NEXT_PUBLIC_CHILDREN_ENDPOINT.");
-          return;
-        }
-
+        // Endpoint backend confirmé
+        const data = await apiFetch<ChildrenResponse>("/api/children/", { token });
         const list = Array.isArray(data) ? data : (data.results ?? []);
-        setChildren(list);
+        setChildren(list.map(normalizeChild));
       } catch (err) {
         if (err instanceof ApiError) {
-          if (err.status === 403) setError("Accès refusé. Cette page est réservée aux parents.");
-          else setError("Impossible de charger la liste des enfants.");
+          if (err.status === 403) {
+            setError("Accès refusé. Cette page est réservée aux parents.");
+          } else if (err.status === 404) {
+            setError("Endpoint /api/children/ introuvable côté serveur.");
+          } else {
+            setError("Impossible de charger la liste des enfants.");
+          }
         } else {
           setError("Une erreur inattendue est survenue.");
         }
@@ -82,8 +75,12 @@ export default function ChildrenPage() {
   return (
     <section className="space-y-6">
       <header>
-        <h1 className="text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50">Mes enfants</h1>
-        <p className="mt-1 text-zinc-600 dark:text-zinc-400">Consultez les informations scolaires de vos enfants.</p>
+        <h1 className="text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50">
+          Mes enfants
+        </h1>
+        <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+          Consultez les informations scolaires de vos enfants.
+        </p>
       </header>
 
       {loading && (
@@ -114,7 +111,11 @@ export default function ChildrenPage() {
               <div className="mb-4 flex items-center gap-3">
                 <div className="h-12 w-12 overflow-hidden rounded-full border border-zinc-200 bg-zinc-100">
                   {child.photo ? (
-                    <img src={child.photo} alt={`${child.first_name} ${child.last_name}`} className="h-full w-full object-cover" />
+                    <img
+                      src={child.photo}
+                      alt={`${child.first_name} ${child.last_name}`}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
                       <UserCircle className="h-7 w-7 text-zinc-400" />
@@ -122,14 +123,24 @@ export default function ChildrenPage() {
                   )}
                 </div>
                 <div>
-                  <h2 className="text-base font-bold">{child.first_name} {child.last_name}</h2>
-                  <p className="text-xs uppercase text-zinc-500">{child.matricule || "Matricule non défini"}</p>
+                  <h2 className="text-base font-bold">
+                    {child.first_name} {child.last_name}
+                  </h2>
+                  <p className="text-xs uppercase text-zinc-500">
+                    {child.matricule || "Matricule non défini"}
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-2 text-sm text-zinc-600">
-                <p className="flex items-center gap-2"><School className="h-4 w-4" /> Classe: <b>{child.classe || "—"}</b></p>
-                <p className="flex items-center gap-2"><Phone className="h-4 w-4" /> Contact: <b>{child.contact || "—"}</b></p>
+                <p className="flex items-center gap-2">
+                  <School className="h-4 w-4" />
+                  Classe: <b>{child.classe || "—"}</b>
+                </p>
+                <p className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  Contact: <b>{child.contact || "—"}</b>
+                </p>
               </div>
             </article>
           ))}

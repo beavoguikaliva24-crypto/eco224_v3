@@ -6,8 +6,6 @@ router = DefaultRouter()
 router.register(r"users", UserViewSet, basename="users")
 
 urlpatterns = [
-    
-    path("api/", include(router.urls)),
-
-    path("api/children/", ParentChildrenListView.as_view(), name="parent-children"),
+    path("", include(router.urls)),
+    path("children/", ParentChildrenListView.as_view(), name="parent-children"),
 ]
