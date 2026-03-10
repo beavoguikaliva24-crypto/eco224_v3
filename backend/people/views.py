@@ -44,22 +44,17 @@ class MyChildrenAPIView(generics.ListAPIView):
 
         return Student.objects.filter(parents=parent_profile, is_active=True).select_related("user", "parents__user")
 
-class ParentChildrenByParentIdAPIView(generics.ListAPIView):
-    """
-    Optionnel (admin/dev): enfants d’un parent donné
-    GET /api/people/parents/<parent_id>/children/
-    """
-    permission_classes = [permissions.IsAuthenticated]
+class MyChildrenAPIView(generics.ListAPIView):
     serializer_class = ParentChildSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        if user.role not in ["DEV", "ADMIN", "STAFF"]:
+        if getattr(user, "role", None) != "PARENT":
             return Student.objects.none()
 
-        parent_id = self.kwargs.get("parent_id")
-        return (
-            Student.objects.filter(parents_id=parent_id, is_active=True)
-            .select_related("user", "parents__user")
-            .order_by("nom", "prenom1")
-        )
+        parent_profile = getattr(user, "parent_profile", None)
+        if not parent_profile:
+            return Student.objects.none()
+
+        return Student.objects.filter(parents=parent_profile, is_active=True).select_related("user")

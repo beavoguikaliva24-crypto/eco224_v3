@@ -23,34 +23,23 @@ class ParentChildSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     full_name = serializers.SerializerMethodField()
     matricule = serializers.SerializerMethodField()
-
-    # ✅ photo élève (pas user.photo)
     photo = serializers.SerializerMethodField()
-
-    # ✅ nouveaux champs demandés
     classe = serializers.SerializerMethodField()
     annee_scolaire = serializers.SerializerMethodField()
 
     class Meta:
         model = Student
-        fields = [
-            "id",
-            "full_name",
-            "matricule",
-            "photo",
-            "classe",
-            "annee_scolaire",
-        ]
+        fields = ["id", "full_name", "matricule", "photo", "classe", "annee_scolaire"]
 
     def get_full_name(self, obj):
-        value = (obj.full_name or "").strip()
-        if value:
-            return value
+        v = (obj.full_name or "").strip()
+        if v:
+            return v
         return f"{(obj.prenom1 or '').strip()} {(obj.nom or '').strip()}".strip() or "Nom non défini"
 
     def get_matricule(self, obj):
-        value = (obj.matricule or "").strip()
-        return value if value else f"MAT-{obj.id}"
+        v = (obj.matricule or "").strip()
+        return v if v else f"MAT-{obj.id}"
 
     def get_photo(self, obj):
         if not obj.photo:
@@ -61,14 +50,13 @@ class ParentChildSerializer(serializers.ModelSerializer):
         return obj.photo.url
 
     def get_classe(self, obj):
-    aff = obj.affectation_actuelle
-    if aff and aff.classe:
-        return aff.classe.nom # Assure-toi que le champ s'appelle 'nom' dans ton modèle Classe
-    return "Non inscris"
+        c = getattr(obj, "classe", None)
+        if c:
+            return getattr(c, "nom", str(c))
+        return "Non définie"
 
     def get_annee_scolaire(self, obj):
-        aff = obj.affectation_actuelle
-        if aff and aff.annee_scolaire:
-            # On utilise le champ de ton modèle Affectation: annee_scolaire.annee_scolaire
-            return str(aff.annee_scolaire.annee_scolaire) 
-        return "N/A"
+        a = getattr(obj, "annee_scolaire", None)
+        if a:
+            return getattr(a, "libelle", str(a))
+        return "Non définie"
