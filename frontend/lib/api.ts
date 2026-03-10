@@ -1,5 +1,5 @@
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://beapc:8000";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://beapc:8000" || "http://localhost:8000" || "http://10.15.8.179:8000";
 
 export type Json = Record<string, unknown>;
 

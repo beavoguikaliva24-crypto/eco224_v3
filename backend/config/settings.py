@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     # les apps tierces
     'corsheaders',
     'rest_framework',
+    'rest_framework_simplejwt'
 
     # les apps Django
     'django.contrib.admin',
@@ -162,6 +163,8 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
 }
 
 
