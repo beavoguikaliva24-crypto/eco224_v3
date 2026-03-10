@@ -40,15 +40,15 @@ ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost
 INSTALLED_APPS = [
 
     # les apps de l'école
-    'people',
-    'school',
-    'notification',
-    'grading',
-    'enrollment',
-    'discipline',
-    'billing',
-    'audit',
-    'accounts',
+    'people.apps.PeopleConfig',
+    'school.apps.SchoolConfig',
+    'notification.apps.NotificationConfig',
+    'grading.apps.GradingConfig',
+    'enrollment.apps.EnrollmentConfig',
+    'discipline.apps.DisciplineConfig',
+    'billing.apps.BillingConfig',
+    'audit.apps.AuditConfig',
+    'accounts.apps.AccountsConfig',
 
     # les apps tierces
     'corsheaders',
@@ -72,6 +72,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'audit.middleware.CurrentUserMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'

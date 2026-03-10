@@ -58,4 +58,33 @@ class Note(models.Model):
     def __str__(self):
         return f"Note de {self.affectation.eleve.full_name} en {self.matiereclasse.matiere.nom} - {self.affectation.classe.nom} Année scolaire: {self.matiereclasse.annee_scolaire.annee_scolaire} - Période: {self.periodicite.nom} - Note1: {self.note1} - Note2: {self.note2} - Moyenne: {self.moyenne} - Appréciation: {self.appreciation}"
     
+class BulletinPeriodique(models.Model):
+    affectation = models.ForeignKey(Affectation, on_delete=models.CASCADE, verbose_name="Affectation")
+    periode = models.ForeignKey(Periode, on_delete=models.CASCADE, verbose_name="Période")
+    moyenne_generale = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="Moyenne générale")
+    appreciation_generale = models.CharField(max_length=255, null=True, blank=True, verbose_name="Appréciation générale")
+
+    class Meta:
+        verbose_name = "Bulletin périodique"
+        verbose_name_plural = "Bulletins périodiques"
+        unique_together = ('affectation', 'periode')  # Un bulletin par élève et période
+
+    def __str__(self):
+        return f"Bulletin de {self.affectation.eleve.full_name} - {self.affectation.classe.nom} - Période: {self.periode.nom} - Moyenne générale: {self.moyenne_generale} - Appréciation générale: {self.appreciation_generale}"
     
+class BulletinAnnuel(models.Model):
+    affectation = models.ForeignKey(Affectation, on_delete=models.CASCADE, verbose_name="Affectation")
+    moyenne_annuelle = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="Moyenne annuelle")
+    appreciation_annuelle = models.CharField(max_length=255, null=True, blank=True, verbose_name="Appréciation annuelle")
+
+    class Meta:
+        verbose_name = "Bulletin annuel"
+        verbose_name_plural = "Bulletins annuels"
+        unique_together = ('affectation', 'annee_scolaire')  # Un bulletin annuel par élève et année scolaire
+
+    def __str__(self):
+        return f"Bulletin annuel de {self.affectation.eleve.full_name} - {self.affectation.classe.nom} - Année scolaire: {self.affectation.annee_scolaire.annee_scolaire} - Moyenne annuelle: {self.moyenne_annuelle} - Appréciation annuelle: {self.appreciation_annuelle}"
+
+
+
+
