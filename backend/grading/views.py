@@ -9,6 +9,7 @@ from .models import Note, BulletinPeriode, BulletinAnnuel
 from .serializers import NoteSerializer, BulletinPeriodeSerializer, BulletinAnnuelSerializer
 from .services import generer_et_sauvegarder_bulletin_periode, generer_et_sauvegarder_bulletin_annuel
 
+
 class NoteViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     queryset = Note.objects.all()
@@ -18,22 +19,20 @@ class BulletinDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, affectation_id, periode_id=None):
-        # Permet de forcer la regénération du bulletin via un paramètre d'URL (?force_generation=true)
         force_generation = request.query_params.get('force_generation', 'false').lower() == 'true'
 
         if periode_id:
             # --- Cas du Bulletin Périodique ---
             if not force_generation:
                 try:
-                    # On essaie de le récupérer depuis la BDD
+                    # Utilisation du bon nom de modèle : BulletinPeriodique
                     bulletin = BulletinPeriode.objects.get(affectation_id=affectation_id, periode_id=periode_id)
                     serializer = BulletinPeriodeSerializer(bulletin)
                     return Response(serializer.data)
                 except BulletinPeriode.DoesNotExist:
-                    # S'il n'existe pas, on passe à la génération
                     pass
 
-            # Si le bulletin n'existe pas ou si on force, on le génère
+            # Appel de la bonne fonction de service
             bulletin = generer_et_sauvegarder_bulletin_periode(affectation_id, periode_id)
             serializer = BulletinPeriodeSerializer(bulletin)
             return Response(serializer.data)
