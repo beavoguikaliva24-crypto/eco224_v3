@@ -22,7 +22,7 @@ export default function StudentListPage() {
     const fetchStudents = async () => {
       try {
         const token = getAccessToken();
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://10.182.66.105:8000";
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://beapc:8000";
         
         const response = await axios.get(`${baseUrl}/api/students/`, {
           headers: { Authorization: `Bearer ${token}` }
