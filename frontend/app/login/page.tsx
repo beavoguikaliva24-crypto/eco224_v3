@@ -5,6 +5,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { Phone, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
+import { setTokens } from "@/lib/auth";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({ phone: "", password: "" });
@@ -19,40 +20,31 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 1. Définition de l'URL (Utilise l'IP si tu es sur ordinateur pour que le mobile capte aussi)
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
       
-      // 2. Appel API
-      // Dans handleSubmit
-		const response = await axios.post(`${baseUrl}/api/token/`, {
-		contact: formData.phone, // Vérifie si ton backend attend 'username', 'phone' ou 'contact'
-		password: formData.password,
-		});
+      const response = await axios.post(`${baseUrl}/api/token/`, {
+        contact: formData.phone,
+        password: formData.password,
+      });
 
-      // 3. Extraction des données (response est défini ICI)
-      const { access, user } = response.data;
+      const { access, refresh, user } = response.data;
 
-      // 4. Stockage Cookies (Pour le Middleware Next.js)
-      Cookies.set("access", access, { expires: 7, path: '/', sameSite: 'lax' });
-      if (user?.role) {
-        Cookies.set("user_role", user.role, { expires: 7, path: '/', sameSite: 'lax' });
+      if (!access || !user?.role) {
+        throw new Error("Données de réponse incomplètes.");
       }
 
-      // 5. Stockage LocalStorage (Pour les hooks clients)
-      localStorage.setItem("access", access);
-      if (user?.role) {
-        localStorage.setItem("user_role", user.role);
-      }
+      // Utilise la fonction centralisée qui gère Cookies ET LocalStorage
+      setTokens(access, refresh, user.role);
 
-      // 6. Redirection propre
-      window.location.href = "/dashboard";
+      // Redirection forcée vers la page student pour rafraîchir l'état du Middleware
+      window.location.href = "/dashboard/student";
 
     } catch (err: any) {
       console.error("Erreur de login:", err);
       if (err.response?.status === 401) {
         setError("Identifiants incorrects.");
       } else {
-        setError("Le serveur est injoignable (Vérifiez l'IP dans .env)");
+        setError("Le serveur est injoignable (Vérifiez votre connexion)");
       }
     } finally {
       setIsLoading(false);
