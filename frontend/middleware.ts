@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server'; // Correction de l'import type
+import type { NextRequest } from 'next/server';
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   '/dashboard/accounts': ['DEV', 'ADMIN'],
@@ -7,26 +7,26 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   '/dashboard/audit': ['DEV'],
   '/dashboard/enrollment': ['DEV', 'ADMIN', 'STAFF'],
   '/dashboard/people': ['DEV', 'ADMIN', 'STAFF'],
-  '/dashboard/student': ['DEV', 'ADMIN', 'STAFF'], // Route ajoutée
+  '/dashboard/student': ['DEV', 'ADMIN', 'STAFF'], // Ajout de la route manquante
 };
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('access')?.value;
-  // On utilise une seule variable constante pour éviter le ReferenceError
-  const currentUserRole = request.cookies.get('user_role')?.value;
+  // On utilise une constante unique pour éviter le ReferenceError
+  const roleValue = request.cookies.get('user_role')?.value;
   const { pathname } = request.nextUrl;
 
-  // 1. Redirection si pas de token
+  // Redirection si pas de token
   if (!token && pathname.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // 2. Vérification des permissions
+  // Vérification des permissions
   if (pathname.startsWith('/dashboard')) {
     for (const [route, allowedRoles] of Object.entries(ROLE_PERMISSIONS)) {
       if (pathname.startsWith(route)) {
-        // Correction de la condition qui causait l'erreur
-        if (!currentUserRole || !allowedRoles.includes(currentUserRole)) {
+        // Correction de la ligne 35 : on utilise roleValue
+        if (!roleValue || !allowedRoles.includes(roleValue)) {
           return NextResponse.redirect(new URL('/dashboard', request.url));
         }
       }

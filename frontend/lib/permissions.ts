@@ -17,6 +17,7 @@ export type MenuGroup = {
  * chaque route dashboard protégée + rôles autorisés
  */
 export const ROUTE_ACCESS: Record<string, AppRole[]> = {
+  "/dashboard/student": ["DEV", "ADMIN", "STAFF", ],
   "/dashboard/enrollment": ["DEV", "ADMIN", "STAFF"],
   "/dashboard/school": ["DEV", "ADMIN", "STAFF", "TEACHER"],
   "/dashboard/schedule": ["DEV", "ADMIN", "STAFF", "TEACHER", "STUDENT"],
@@ -28,6 +29,5 @@ export const ROUTE_ACCESS: Record<string, AppRole[]> = {
   "/dashboard/people": ["DEV", "ADMIN", "STAFF"],
   "/dashboard/billing": ["DEV", "ADMIN"],
   "/dashboard/audit": ["DEV"],
-  "/dashboard/student": ["DEV", "ADMIN", "STAFF", ],
   
 };
