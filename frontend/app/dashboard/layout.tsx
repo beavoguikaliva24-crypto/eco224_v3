@@ -22,6 +22,7 @@ const menuGroups = [
   {
     title: "Scolarité",
     items: [
+      { name: "Eleves", href: "/dashboard/students", icon: Users, roles: ["DEV", "ADMIN", "STAFF"] },
       { name: "Inscriptions", href: "/dashboard/enrollment", icon: GraduationCap, roles: ["DEV", "ADMIN", "STAFF"] },
       { name: "Classes & École", href: "/dashboard/school", icon: School, roles: ["DEV", "ADMIN", "STAFF"] },
       { name: "Matières", href: "/dashboard/schedule", icon: BookOpen, roles: ["DEV", "ADMIN", "STAFF"]  },

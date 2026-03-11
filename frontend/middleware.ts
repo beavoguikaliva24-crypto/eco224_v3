@@ -8,6 +8,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   '/dashboard/audit': ['DEV'],
   '/dashboard/enrollment': ['DEV', 'ADMIN', 'STAFF'],
   '/dashboard/people': ['DEV', 'ADMIN', 'STAFF'],
+  '/dashboard/students' : ['DEV', 'ADMIN', 'STAFF'],
 };
 
 export function middleware(request: NextRequest) {

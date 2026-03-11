@@ -28,4 +28,6 @@ export const ROUTE_ACCESS: Record<string, AppRole[]> = {
   "/dashboard/people": ["DEV", "ADMIN", "STAFF"],
   "/dashboard/billing": ["DEV", "ADMIN"],
   "/dashboard/audit": ["DEV"],
+  "/dashboard/students": ["DEV", "ADMIN", "STAFF", ],
+  
 };
