@@ -16,9 +16,15 @@ export function middleware(request: NextRequest) {
   const userRole = request.cookies.get('user_role')?.value;
   const { pathname } = request.nextUrl;
 
+ 
+
   // 1. Redirection vers login si accès au dashboard sans token
+   // Si on tente d'accéder au dashboard sans cookie 'access'
   if (!token && pathname.startsWith('/dashboard')) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    const loginUrl = new URL('/login', request.url);
+    // On peut ajouter l'URL actuelle en paramètre pour y revenir après login
+    loginUrl.searchParams.set('from', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   // 2. Vérification des permissions par URL
